@@ -82,16 +82,20 @@ func (n Network) URL() string {
 	}
 }
 
-func (n Network) ChainID() *felt.Felt {
+func (n Network) ChainIDString() string {
 	switch n {
 	case GOERLI, INTEGRATION:
-		return new(felt.Felt).SetBytes([]byte("SN_GOERLI"))
+		return "SN_GOERLI"
 	case MAINNET:
-		return new(felt.Felt).SetBytes([]byte("SN_MAIN"))
+		return "SN_MAIN"
 	case GOERLI2:
-		return new(felt.Felt).SetBytes([]byte("SN_GOERLI2"))
+		return "SN_GOERLI2"
 	default:
 		// Should not happen.
 		panic(ErrUnknownNetwork)
 	}
+}
+
+func (n Network) ChainID() *felt.Felt {
+	return new(felt.Felt).SetBytes([]byte(n.ChainIDString()))
 }
