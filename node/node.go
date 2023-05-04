@@ -3,6 +3,7 @@ package node
 import (
 	"context"
 	"fmt"
+	"github.com/NethermindEth/juno/grpc"
 	"path/filepath"
 	"reflect"
 
@@ -28,6 +29,7 @@ const (
 type Config struct {
 	LogLevel     utils.LogLevel `mapstructure:"log-level"`
 	RPCPort      uint16         `mapstructure:"rpc-port"`
+	GRPCPort     uint16         `mapstructure:"grpc-port"`
 	DatabasePath string         `mapstructure:"db-path"`
 	Network      utils.Network  `mapstructure:"network"`
 	Pprof        bool           `mapstructure:"pprof"`
@@ -143,6 +145,10 @@ func makeHTTP(port uint16, rpcHandler *rpc.Handler, log utils.SimpleLogger) *jso
 	}, log)
 }
 
+func makeGRPC(port uint16, db db.DB, log utils.Logger) *grpc.Server {
+	return grpc.NewServer(port, db, log)
+}
+
 // Run starts Juno node by opening the DB, initialising services.
 // All the services blocking and any errors returned by service run function is logged.
 // Run will wait for all services to return before exiting.
@@ -178,6 +184,10 @@ func (n *Node) Run(ctx context.Context) {
 
 	if n.cfg.Pprof {
 		n.services = append(n.services, pprof.New(defaultPprofPort, n.log))
+	}
+
+	if n.cfg.GRPCPort > 0 {
+		n.services = append(n.services, makeGRPC(n.cfg.GRPCPort, n.db, n.log))
 	}
 
 	ctx, cancel := context.WithCancel(ctx)

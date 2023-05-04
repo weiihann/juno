@@ -28,6 +28,7 @@ const (
 	configF   = "config"
 	logLevelF = "log-level"
 	rpcPortF  = "rpc-port"
+	grpcPortF = "grpc-port"
 	dbPathF   = "db-path"
 	networkF  = "network"
 	pprofF    = "pprof"
@@ -122,6 +123,7 @@ func NewCmd(config *node.Config, run func(*cobra.Command, []string) error) *cobr
 	junoCmd.Flags().StringVar(&cfgFile, configF, defaultConfig, configFlagUsage)
 	junoCmd.Flags().Var(&defaultLogLevel, logLevelF, logLevelFlagUsage)
 	junoCmd.Flags().Uint16(rpcPortF, defaultRPCPort, rpcPortUsage)
+	junoCmd.Flags().Uint16(grpcPortF, 0, "Todo grpc port usage")
 	junoCmd.Flags().String(dbPathF, defaultDBPath, dbPathUsage)
 	junoCmd.Flags().Var(&defaultNetwork, networkF, networkUsage)
 	junoCmd.Flags().Bool(pprofF, defaultPprof, pprofUsage)
