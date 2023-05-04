@@ -3,8 +3,6 @@ package grpc
 import (
 	"github.com/NethermindEth/juno/db"
 	"github.com/NethermindEth/juno/grpc/gen"
-	"github.com/davecgh/go-spew/spew"
-	"time"
 )
 
 type handlers struct {
@@ -17,8 +15,6 @@ func (h handlers) Tx(cursor *gen.Cursor, server gen.DB_TxServer) error {
 	if err != nil {
 		return err
 	}
-
-	spew.Dump("BEFORE")
 
 	for it.Seek(nil); it.Valid(); it.Next() {
 		value, err := it.Value()
@@ -33,10 +29,7 @@ func (h handlers) Tx(cursor *gen.Cursor, server gen.DB_TxServer) error {
 		if err != nil {
 			return nil
 		}
-
-		time.Sleep(time.Second)
 	}
-	spew.Dump("AFTER")
 
 	return nil
 }
