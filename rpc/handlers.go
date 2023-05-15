@@ -421,8 +421,8 @@ func (h *Handler) StateUpdate(id *BlockID) (*StateUpdate, *jsonrpc.Error) {
 //
 // It follows the specification defined here:
 // https://github.com/starkware-libs/starknet-specs/blob/a789ccc3432c57777beceaa53a34a7ae2f25fda0/api/starknet_api_openrpc.json#L569
-func (h *Handler) Syncing() (*SyncState, *jsonrpc.Error) {
-	defaultSyncState := &SyncState{False: new(bool)}
+func (h *Handler) Syncing() (*Sync, *jsonrpc.Error) {
+	defaultSyncState := &Sync{Syncing: new(bool)}
 
 	startingBlockNumber := h.synchronizer.StartingBlockNumber
 	if startingBlockNumber == nil {
@@ -443,15 +443,13 @@ func (h *Handler) Syncing() (*SyncState, *jsonrpc.Error) {
 	if highestBlockHeader.Number < head.Number {
 		return defaultSyncState, nil
 	}
-	return &SyncState{
-		Status: &SyncStatus{
-			StartingBlockHash:   startingBlockHeader.Hash,
-			StartingBlockNumber: NumAsHex(startingBlockHeader.Number),
-			CurrentBlockHash:    head.Hash,
-			CurrentBlockNumber:  NumAsHex(head.Number),
-			HighestBlockHash:    highestBlockHeader.Hash,
-			HighestBlockNumber:  NumAsHex(highestBlockHeader.Number),
-		},
+	return &Sync{
+		StartingBlockHash:   startingBlockHeader.Hash,
+		StartingBlockNumber: NumAsHex(startingBlockHeader.Number),
+		CurrentBlockHash:    head.Hash,
+		CurrentBlockNumber:  NumAsHex(head.Number),
+		HighestBlockHash:    highestBlockHeader.Hash,
+		HighestBlockNumber:  NumAsHex(highestBlockHeader.Number),
 	}, nil
 }
 
@@ -493,7 +491,7 @@ func (h *Handler) Nonce(id *BlockID, address *felt.Felt) (*felt.Felt, *jsonrpc.E
 //
 // It follows the specification defined here:
 // https://github.com/starkware-libs/starknet-specs/blob/a789ccc3432c57777beceaa53a34a7ae2f25fda0/api/starknet_api_openrpc.json#L110
-func (h *Handler) StorageAt(id *BlockID, address, key *felt.Felt) (*felt.Felt, *jsonrpc.Error) {
+func (h *Handler) StorageAt(address, key *felt.Felt, id *BlockID) (*felt.Felt, *jsonrpc.Error) {
 	stateReader, stateCloser, err := h.stateByBlockID(id)
 	if err != nil {
 		return nil, ErrBlockNotFound
