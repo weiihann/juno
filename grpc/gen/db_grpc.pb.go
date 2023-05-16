@@ -26,7 +26,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DBClient interface {
-	Tx(ctx context.Context, in *Cursor, opts ...grpc.CallOption) (DB_TxClient, error)
+	Tx(ctx context.Context, opts ...grpc.CallOption) (DB_TxClient, error)
 }
 
 type dBClient struct {
@@ -37,28 +37,27 @@ func NewDBClient(cc grpc.ClientConnInterface) DBClient {
 	return &dBClient{cc}
 }
 
-func (c *dBClient) Tx(ctx context.Context, in *Cursor, opts ...grpc.CallOption) (DB_TxClient, error) {
+func (c *dBClient) Tx(ctx context.Context, opts ...grpc.CallOption) (DB_TxClient, error) {
 	stream, err := c.cc.NewStream(ctx, &DB_ServiceDesc.Streams[0], DB_Tx_FullMethodName, opts...)
 	if err != nil {
 		return nil, err
 	}
 	x := &dBTxClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
 	return x, nil
 }
 
 type DB_TxClient interface {
+	Send(*Cursor) error
 	Recv() (*Pair, error)
 	grpc.ClientStream
 }
 
 type dBTxClient struct {
 	grpc.ClientStream
+}
+
+func (x *dBTxClient) Send(m *Cursor) error {
+	return x.ClientStream.SendMsg(m)
 }
 
 func (x *dBTxClient) Recv() (*Pair, error) {
@@ -73,14 +72,14 @@ func (x *dBTxClient) Recv() (*Pair, error) {
 // All implementations should embed UnimplementedDBServer
 // for forward compatibility
 type DBServer interface {
-	Tx(*Cursor, DB_TxServer) error
+	Tx(DB_TxServer) error
 }
 
 // UnimplementedDBServer should be embedded to have forward compatible implementations.
 type UnimplementedDBServer struct {
 }
 
-func (UnimplementedDBServer) Tx(*Cursor, DB_TxServer) error {
+func (UnimplementedDBServer) Tx(DB_TxServer) error {
 	return status.Errorf(codes.Unimplemented, "method Tx not implemented")
 }
 
@@ -96,15 +95,12 @@ func RegisterDBServer(s grpc.ServiceRegistrar, srv DBServer) {
 }
 
 func _DB_Tx_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(Cursor)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(DBServer).Tx(m, &dBTxServer{stream})
+	return srv.(DBServer).Tx(&dBTxServer{stream})
 }
 
 type DB_TxServer interface {
 	Send(*Pair) error
+	Recv() (*Cursor, error)
 	grpc.ServerStream
 }
 
@@ -114,6 +110,14 @@ type dBTxServer struct {
 
 func (x *dBTxServer) Send(m *Pair) error {
 	return x.ServerStream.SendMsg(m)
+}
+
+func (x *dBTxServer) Recv() (*Cursor, error) {
+	m := new(Cursor)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // DB_ServiceDesc is the grpc.ServiceDesc for DB service.
@@ -128,6 +132,7 @@ var DB_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "Tx",
 			Handler:       _DB_Tx_Handler,
 			ServerStreams: true,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "db.proto",

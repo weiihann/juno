@@ -22,6 +22,119 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type Op int32
+
+const (
+	Op_FIRST      Op = 0
+	Op_SEEK       Op = 1
+	Op_SEEK_EXACT Op = 2
+	Op_LAST       Op = 3
+	Op_NEXT       Op = 4
+	Op_PREV       Op = 5
+)
+
+// Enum value maps for Op.
+var (
+	Op_name = map[int32]string{
+		0: "FIRST",
+		1: "SEEK",
+		2: "SEEK_EXACT",
+		3: "LAST",
+		4: "NEXT",
+		5: "PREV",
+	}
+	Op_value = map[string]int32{
+		"FIRST":      0,
+		"SEEK":       1,
+		"SEEK_EXACT": 2,
+		"LAST":       3,
+		"NEXT":       4,
+		"PREV":       5,
+	}
+)
+
+func (x Op) Enum() *Op {
+	p := new(Op)
+	*p = x
+	return p
+}
+
+func (x Op) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Op) Descriptor() protoreflect.EnumDescriptor {
+	return file_db_proto_enumTypes[0].Descriptor()
+}
+
+func (Op) Type() protoreflect.EnumType {
+	return &file_db_proto_enumTypes[0]
+}
+
+func (x Op) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Op.Descriptor instead.
+func (Op) EnumDescriptor() ([]byte, []int) {
+	return file_db_proto_rawDescGZIP(), []int{0}
+}
+
+type Cursor struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Op Op     `protobuf:"varint,1,opt,name=op,proto3,enum=database.Op" json:"op,omitempty"`
+	K  []byte `protobuf:"bytes,2,opt,name=k,proto3" json:"k,omitempty"`
+}
+
+func (x *Cursor) Reset() {
+	*x = Cursor{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_db_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Cursor) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Cursor) ProtoMessage() {}
+
+func (x *Cursor) ProtoReflect() protoreflect.Message {
+	mi := &file_db_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Cursor.ProtoReflect.Descriptor instead.
+func (*Cursor) Descriptor() ([]byte, []int) {
+	return file_db_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Cursor) GetOp() Op {
+	if x != nil {
+		return x.Op
+	}
+	return Op_FIRST
+}
+
+func (x *Cursor) GetK() []byte {
+	if x != nil {
+		return x.K
+	}
+	return nil
+}
+
 type Pair struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -34,7 +147,7 @@ type Pair struct {
 func (x *Pair) Reset() {
 	*x = Pair{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_db_proto_msgTypes[0]
+		mi := &file_db_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -47,7 +160,7 @@ func (x *Pair) String() string {
 func (*Pair) ProtoMessage() {}
 
 func (x *Pair) ProtoReflect() protoreflect.Message {
-	mi := &file_db_proto_msgTypes[0]
+	mi := &file_db_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -60,7 +173,7 @@ func (x *Pair) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Pair.ProtoReflect.Descriptor instead.
 func (*Pair) Descriptor() ([]byte, []int) {
-	return file_db_proto_rawDescGZIP(), []int{0}
+	return file_db_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Pair) GetK() []byte {
@@ -77,44 +190,6 @@ func (x *Pair) GetV() []byte {
 	return nil
 }
 
-type Cursor struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-}
-
-func (x *Cursor) Reset() {
-	*x = Cursor{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_db_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *Cursor) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Cursor) ProtoMessage() {}
-
-func (x *Cursor) ProtoReflect() protoreflect.Message {
-	mi := &file_db_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Cursor.ProtoReflect.Descriptor instead.
-func (*Cursor) Descriptor() ([]byte, []int) {
-	return file_db_proto_rawDescGZIP(), []int{1}
-}
-
 var File_db_proto protoreflect.FileDescriptor
 
 var file_db_proto_rawDesc = []byte{
@@ -123,15 +198,22 @@ var file_db_proto_rawDesc = []byte{
 	0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x65, 0x6d, 0x70, 0x74, 0x79, 0x2e, 0x70, 0x72, 0x6f, 0x74,
 	0x6f, 0x1a, 0x1e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62,
 	0x75, 0x66, 0x2f, 0x77, 0x72, 0x61, 0x70, 0x70, 0x65, 0x72, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x22, 0x22, 0x0a, 0x04, 0x50, 0x61, 0x69, 0x72, 0x12, 0x0c, 0x0a, 0x01, 0x6b, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x0c, 0x52, 0x01, 0x6b, 0x12, 0x0c, 0x0a, 0x01, 0x76, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x0c, 0x52, 0x01, 0x76, 0x22, 0x08, 0x0a, 0x06, 0x43, 0x75, 0x72, 0x73, 0x6f, 0x72, 0x32,
-	0x2e, 0x0a, 0x02, 0x44, 0x42, 0x12, 0x28, 0x0a, 0x02, 0x54, 0x78, 0x12, 0x10, 0x2e, 0x64, 0x61,
-	0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x2e, 0x43, 0x75, 0x72, 0x73, 0x6f, 0x72, 0x1a, 0x0e, 0x2e,
-	0x64, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x2e, 0x50, 0x61, 0x69, 0x72, 0x30, 0x01, 0x42,
-	0x1a, 0x5a, 0x18, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x6a, 0x75,
-	0x6e, 0x6f, 0x2f, 0x67, 0x72, 0x70, 0x63, 0x2f, 0x67, 0x65, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x6f, 0x22, 0x34, 0x0a, 0x06, 0x43, 0x75, 0x72, 0x73, 0x6f, 0x72, 0x12, 0x1c, 0x0a, 0x02, 0x6f,
+	0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x0c, 0x2e, 0x64, 0x61, 0x74, 0x61, 0x62, 0x61,
+	0x73, 0x65, 0x2e, 0x4f, 0x70, 0x52, 0x02, 0x6f, 0x70, 0x12, 0x0c, 0x0a, 0x01, 0x6b, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x0c, 0x52, 0x01, 0x6b, 0x22, 0x22, 0x0a, 0x04, 0x50, 0x61, 0x69, 0x72, 0x12,
+	0x0c, 0x0a, 0x01, 0x6b, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x01, 0x6b, 0x12, 0x0c, 0x0a,
+	0x01, 0x76, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x01, 0x76, 0x2a, 0x47, 0x0a, 0x02, 0x4f,
+	0x70, 0x12, 0x09, 0x0a, 0x05, 0x46, 0x49, 0x52, 0x53, 0x54, 0x10, 0x00, 0x12, 0x08, 0x0a, 0x04,
+	0x53, 0x45, 0x45, 0x4b, 0x10, 0x01, 0x12, 0x0e, 0x0a, 0x0a, 0x53, 0x45, 0x45, 0x4b, 0x5f, 0x45,
+	0x58, 0x41, 0x43, 0x54, 0x10, 0x02, 0x12, 0x08, 0x0a, 0x04, 0x4c, 0x41, 0x53, 0x54, 0x10, 0x03,
+	0x12, 0x08, 0x0a, 0x04, 0x4e, 0x45, 0x58, 0x54, 0x10, 0x04, 0x12, 0x08, 0x0a, 0x04, 0x50, 0x52,
+	0x45, 0x56, 0x10, 0x05, 0x32, 0x30, 0x0a, 0x02, 0x44, 0x42, 0x12, 0x2a, 0x0a, 0x02, 0x54, 0x78,
+	0x12, 0x10, 0x2e, 0x64, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x2e, 0x43, 0x75, 0x72, 0x73,
+	0x6f, 0x72, 0x1a, 0x0e, 0x2e, 0x64, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x2e, 0x50, 0x61,
+	0x69, 0x72, 0x28, 0x01, 0x30, 0x01, 0x42, 0x1a, 0x5a, 0x18, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62,
+	0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x6a, 0x75, 0x6e, 0x6f, 0x2f, 0x67, 0x72, 0x70, 0x63, 0x2f, 0x67,
+	0x65, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -146,19 +228,22 @@ func file_db_proto_rawDescGZIP() []byte {
 	return file_db_proto_rawDescData
 }
 
+var file_db_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_db_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_db_proto_goTypes = []interface{}{
-	(*Pair)(nil),   // 0: database.Pair
+	(Op)(0),        // 0: database.Op
 	(*Cursor)(nil), // 1: database.Cursor
+	(*Pair)(nil),   // 2: database.Pair
 }
 var file_db_proto_depIdxs = []int32{
-	1, // 0: database.DB.Tx:input_type -> database.Cursor
-	0, // 1: database.DB.Tx:output_type -> database.Pair
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0, // 0: database.Cursor.op:type_name -> database.Op
+	1, // 1: database.DB.Tx:input_type -> database.Cursor
+	2, // 2: database.DB.Tx:output_type -> database.Pair
+	2, // [2:3] is the sub-list for method output_type
+	1, // [1:2] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_db_proto_init() }
@@ -168,7 +253,7 @@ func file_db_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_db_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Pair); i {
+			switch v := v.(*Cursor); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -180,7 +265,7 @@ func file_db_proto_init() {
 			}
 		}
 		file_db_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Cursor); i {
+			switch v := v.(*Pair); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -197,13 +282,14 @@ func file_db_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_db_proto_rawDesc,
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_db_proto_goTypes,
 		DependencyIndexes: file_db_proto_depIdxs,
+		EnumInfos:         file_db_proto_enumTypes,
 		MessageInfos:      file_db_proto_msgTypes,
 	}.Build()
 	File_db_proto = out.File

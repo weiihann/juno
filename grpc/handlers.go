@@ -9,27 +9,24 @@ type handlers struct {
 	db db.DB
 }
 
-func (h handlers) Tx(cursor *gen.Cursor, server gen.DB_TxServer) error {
+func (h handlers) Tx(server gen.DB_TxServer) error {
 	tx := h.db.NewTransaction(false)
 	it, err := tx.NewIterator()
 	if err != nil {
 		return err
 	}
+	_ = it
 
-	for it.Seek(nil); it.Valid(); it.Next() {
-		value, err := it.Value()
+	for {
+		cursor, err := server.Recv()
 		if err != nil {
 			return err
 		}
+		_ = cursor
 
-		err = server.Send(&gen.Pair{
-			K: it.Key(),
-			V: value,
-		})
-		if err != nil {
-			return nil
-		}
 	}
+}
 
+func (h handlers) seek(server gen.DB_TxServer, key []byte) error {
 	return nil
 }

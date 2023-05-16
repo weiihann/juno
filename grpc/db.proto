@@ -8,13 +8,24 @@ package database;
 option go_package = "github.com/juno/grpc/gen";
 
 service DB {
-  rpc Tx(Cursor) returns (stream Pair);
+  rpc Tx(stream Cursor) returns (stream Pair);
+}
+
+enum Op {
+  FIRST = 0;
+  SEEK = 1;
+  SEEK_EXACT = 2;
+  LAST = 3;
+  NEXT = 4;
+  PREV = 5;
+}
+
+message Cursor {
+  Op op = 1;
+  bytes k = 2;
 }
 
 message Pair {
   bytes k = 1;
   bytes v = 2;
-}
-
-message Cursor {
 }
