@@ -5,11 +5,10 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/NethermindEth/juno/encoder"
-
 	"github.com/NethermindEth/juno/core"
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/juno/db"
+	"github.com/NethermindEth/juno/encoder"
 )
 
 var errChunkSizeReached = errors.New("chunk size reached")
@@ -84,14 +83,14 @@ func (c *ContinuationToken) FromString(str string) error {
 }
 
 type FilteredEvent struct {
-	*core.Event
+	core.Event
 	BlockNumber     uint64
 	BlockHash       *felt.Felt
 	TransactionHash *felt.Felt
 }
 
-func (e *EventFilter) Events(cToken *ContinuationToken, chunkSize uint64) ([]*FilteredEvent, *ContinuationToken, error) {
-	var matchedEvents []*FilteredEvent
+func (e *EventFilter) Events(cToken *ContinuationToken, chunkSize uint64) ([]FilteredEvent, *ContinuationToken, error) {
+	matchedEvents := make([]FilteredEvent, 0, chunkSize)
 
 	filterKeysMap := make(map[felt.Felt]bool, len(e.keys))
 	for _, key := range e.keys {
@@ -166,9 +165,9 @@ func (e *EventFilter) Events(cToken *ContinuationToken, chunkSize uint64) ([]*Fi
 	return matchedEvents, nil, nil
 }
 
-func (e *EventFilter) appendBlockEvents(matchedEventsSofar []*FilteredEvent, header *core.Header,
+func (e *EventFilter) appendBlockEvents(matchedEventsSofar []FilteredEvent, header *core.Header,
 	keysMap map[felt.Felt]bool, cToken *ContinuationToken, chunkSize uint64,
-) ([]*FilteredEvent, uint64, error) {
+) ([]FilteredEvent, uint64, error) {
 	receipts, err := receiptsByBlockNumber(e.txn, header.Number)
 	if err != nil {
 		return nil, 0, err
@@ -199,11 +198,11 @@ func (e *EventFilter) appendBlockEvents(matchedEventsSofar []*FilteredEvent, hea
 
 			if matches {
 				if uint64(len(matchedEventsSofar)) < chunkSize {
-					matchedEventsSofar = append(matchedEventsSofar, &FilteredEvent{
+					matchedEventsSofar = append(matchedEventsSofar, FilteredEvent{
 						BlockNumber:     header.Number,
 						BlockHash:       header.Hash,
 						TransactionHash: receipt.TransactionHash,
-						Event:           event,
+						Event:           *event,
 					})
 				} else {
 					// we are at the capacity, return what we have accumulated so far and a continuation token
