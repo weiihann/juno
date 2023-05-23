@@ -9,7 +9,6 @@ import (
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/juno/db"
 	"github.com/NethermindEth/juno/encoder"
-	"time"
 )
 
 var errChunkSizeReached = errors.New("chunk size reached")
@@ -91,11 +90,6 @@ type FilteredEvent struct {
 }
 
 func (e *EventFilter) Events(cToken *ContinuationToken, chunkSize uint64) ([]FilteredEvent, *ContinuationToken, error) {
-	start := time.Now()
-	defer func() {
-		fmt.Println("EVents took ", time.Since(start))
-	}()
-
 	matchedEvents := make([]FilteredEvent, 0, chunkSize)
 
 	filterKeysMap := make(map[felt.Felt]bool, len(e.keys))
@@ -156,10 +150,8 @@ func (e *EventFilter) Events(cToken *ContinuationToken, chunkSize uint64) ([]Fil
 			continue
 		}
 
-		startAppend := time.Now()
 		var processedEvents uint64
 		matchedEvents, processedEvents, err = e.appendBlockEvents(matchedEvents, &header, filterKeysMap, cToken, chunkSize)
-		fmt.Println("Append took", time.Since(startAppend))
 
 		if err != nil {
 			if errors.Is(err, errChunkSizeReached) {

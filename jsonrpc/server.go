@@ -6,9 +6,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -246,6 +248,12 @@ func isNil(i any) bool {
 }
 
 func (s *Server) handleRequest(req *request) (*response, error) {
+	start := time.Now()
+	handler := time.Duration(0)
+	defer func() {
+		fmt.Println("handleRequest ", time.Since(start), handler)
+	}()
+
 	if err := req.isSane(); err != nil {
 		return nil, err
 	}
@@ -267,7 +275,10 @@ func (s *Server) handleRequest(req *request) (*response, error) {
 		return res, nil
 	}
 
+	handlerStart := time.Now()
 	tuple := reflect.ValueOf(calledMethod.Handler).Call(args)
+	handler = time.Since(handlerStart)
+
 	if res.ID == nil { // notification
 		return nil, nil
 	}
