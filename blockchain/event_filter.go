@@ -1,8 +1,11 @@
 package blockchain
 
 import (
+	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/NethermindEth/juno/encoder"
 
 	"github.com/NethermindEth/juno/core"
 	"github.com/NethermindEth/juno/core/felt"
@@ -101,9 +104,26 @@ func (e *EventFilter) Events(cToken *ContinuationToken, chunkSize uint64) ([]*Fi
 		curBlock = cToken.fromBlock
 	}
 
-	for ; curBlock <= e.toBlock; curBlock++ {
-		header, err := blockHeaderByNumber(e.txn, curBlock)
-		if err != nil {
+	curBlockBytes := make([]byte, lenOfByteSlice)
+	binary.BigEndian.PutUint64(curBlockBytes, curBlock)
+	headerIterator, err := e.txn.NewIterator()
+	if err != nil {
+		return nil, nil, err
+	}
+	defer headerIterator.Close()
+
+	for headerIterator.Seek(db.BlockHeadersByNumber.Key(curBlockBytes)); curBlock <= e.toBlock; curBlock, _ = curBlock+1, headerIterator.Next() {
+		binary.BigEndian.PutUint64(curBlockBytes, curBlock)
+		if !headerIterator.Valid() || !bytes.Equal(headerIterator.Key(), db.BlockHeadersByNumber.Key(curBlockBytes)) {
+			return nil, nil, errors.New("block not found")
+		}
+
+		var header core.Header
+		headerBytes, itErr := headerIterator.Value()
+		if itErr != nil {
+			return nil, nil, itErr
+		}
+		if err = encoder.Unmarshal(headerBytes, &header); err != nil {
 			return nil, nil, err
 		}
 
@@ -132,7 +152,7 @@ func (e *EventFilter) Events(cToken *ContinuationToken, chunkSize uint64) ([]*Fi
 		}
 
 		var processedEvents uint64
-		matchedEvents, processedEvents, err = e.appendBlockEvents(matchedEvents, header, filterKeysMap, cToken, chunkSize)
+		matchedEvents, processedEvents, err = e.appendBlockEvents(matchedEvents, &header, filterKeysMap, cToken, chunkSize)
 		if err != nil {
 			if errors.Is(err, errChunkSizeReached) {
 				return matchedEvents, &ContinuationToken{
