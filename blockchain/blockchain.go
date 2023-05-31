@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"strings"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/NethermindEth/juno/core"
@@ -37,22 +36,14 @@ type Reader interface {
 	HeadState() (core.StateReader, StateCloser, error)
 	StateAtBlockHash(blockHash *felt.Felt) (core.StateReader, StateCloser, error)
 	StateAtBlockNumber(blockNumber uint64) (core.StateReader, StateCloser, error)
+
+	EventFilter(from *felt.Felt, keys []*felt.Felt) (*EventFilter, error)
 }
 
-var supportedStarknetVersion = semver.MustParse("0.11.0")
+var supportedStarknetVersion = semver.MustParse("0.11.2")
 
 func checkBlockVersion(protocolVersion string) error {
-	if protocolVersion == "" {
-		return nil
-	}
-
-	sep := "."
-	digits := strings.Split(protocolVersion, sep)
-	// pad with 3 zeros in case version has less than 3 digits
-	digits = append(digits, []string{"0", "0", "0"}...)
-
-	// get first 3 digits only
-	blockVer, err := semver.NewVersion(strings.Join(digits[:3], sep))
+	blockVer, err := core.ParseBlockVersion(protocolVersion)
 	if err != nil {
 		return err
 	}
@@ -239,12 +230,12 @@ func (b *Blockchain) Receipt(hash *felt.Felt) (*core.TransactionReceipt, *felt.F
 }
 
 // Store takes a block and state update and performs sanity checks before putting in the database.
-func (b *Blockchain) Store(block *core.Block, stateUpdate *core.StateUpdate, declaredClasses map[felt.Felt]core.Class) error {
+func (b *Blockchain) Store(block *core.Block, stateUpdate *core.StateUpdate, newClasses map[felt.Felt]core.Class) error {
 	return b.database.Update(func(txn db.Transaction) error {
 		if err := b.verifyBlock(txn, block); err != nil {
 			return err
 		}
-		if err := core.NewState(txn).Update(block.Number, stateUpdate, declaredClasses); err != nil {
+		if err := core.NewState(txn).Update(block.Number, stateUpdate, newClasses); err != nil {
 			return err
 		}
 		if err := storeBlockHeader(txn, block.Header); err != nil {
@@ -367,23 +358,37 @@ func blockByNumber(txn db.Transaction, number uint64) (*core.Block, error) {
 
 	block := new(core.Block)
 	block.Header = header
+	block.Transactions, err = transactionsByBlockNumber(txn, number)
+	if err != nil {
+		return nil, err
+	}
 
+	block.Receipts, err = receiptsByBlockNumber(txn, number)
+	if err != nil {
+		return nil, err
+	}
+	return block, nil
+}
+
+func transactionsByBlockNumber(txn db.Transaction, number uint64) ([]core.Transaction, error) {
 	iterator, err := txn.NewIterator()
 	if err != nil {
 		return nil, err
 	}
 
+	var txs []core.Transaction
 	numBytes := make([]byte, lenOfByteSlice)
 	binary.BigEndian.PutUint64(numBytes, number)
+
 	prefix := db.TransactionsByBlockNumberAndIndex.Key(numBytes)
 	for iterator.Seek(prefix); iterator.Valid(); iterator.Next() {
 		if !bytes.Equal(iterator.Key()[:len(prefix)], prefix) {
 			break
 		}
 
-		val, err := iterator.Value()
-		if err != nil {
-			return nil, db.CloseAndWrapOnError(iterator.Close, err)
+		val, vErr := iterator.Value()
+		if vErr != nil {
+			return nil, db.CloseAndWrapOnError(iterator.Close, vErr)
 		}
 
 		var tx core.Transaction
@@ -391,18 +396,35 @@ func blockByNumber(txn db.Transaction, number uint64) (*core.Block, error) {
 			return nil, db.CloseAndWrapOnError(iterator.Close, err)
 		}
 
-		block.Transactions = append(block.Transactions, tx)
+		txs = append(txs, tx)
 	}
 
-	prefix = db.ReceiptsByBlockNumberAndIndex.Key(numBytes)
+	if err = iterator.Close(); err != nil {
+		return nil, err
+	}
+
+	return txs, nil
+}
+
+func receiptsByBlockNumber(txn db.Transaction, number uint64) ([]*core.TransactionReceipt, error) {
+	iterator, err := txn.NewIterator()
+	if err != nil {
+		return nil, err
+	}
+
+	var receipts []*core.TransactionReceipt
+	numBytes := make([]byte, lenOfByteSlice)
+	binary.BigEndian.PutUint64(numBytes, number)
+
+	prefix := db.ReceiptsByBlockNumberAndIndex.Key(numBytes)
 	for iterator.Seek(prefix); iterator.Valid(); iterator.Next() {
 		if !bytes.Equal(iterator.Key()[:len(prefix)], prefix) {
 			break
 		}
 
-		val, err := iterator.Value()
-		if err != nil {
-			return nil, db.CloseAndWrapOnError(iterator.Close, err)
+		val, vErr := iterator.Value()
+		if vErr != nil {
+			return nil, db.CloseAndWrapOnError(iterator.Close, vErr)
 		}
 
 		receipt := new(core.TransactionReceipt)
@@ -410,13 +432,14 @@ func blockByNumber(txn db.Transaction, number uint64) (*core.Block, error) {
 			return nil, db.CloseAndWrapOnError(iterator.Close, err)
 		}
 
-		block.Receipts = append(block.Receipts, receipt)
+		receipts = append(receipts, receipt)
 	}
 
-	if err := iterator.Close(); err != nil {
+	if err = iterator.Close(); err != nil {
 		return nil, err
 	}
-	return block, nil
+
+	return receipts, nil
 }
 
 // blockByHash retrieves a block from database by its hash
@@ -468,7 +491,7 @@ func stateUpdateByHash(txn db.Transaction, hash *felt.Felt) (*core.StateUpdate, 
 }
 
 // SanityCheckNewHeight checks integrity of a block and resulting state update
-func (b *Blockchain) SanityCheckNewHeight(block *core.Block, stateUpdate *core.StateUpdate, classes map[felt.Felt]core.Class) error {
+func (b *Blockchain) SanityCheckNewHeight(block *core.Block, stateUpdate *core.StateUpdate, newClasses map[felt.Felt]core.Class) error {
 	if !block.Hash.Equal(stateUpdate.BlockHash) {
 		return errors.New("block hashes do not match")
 	}
@@ -476,29 +499,11 @@ func (b *Blockchain) SanityCheckNewHeight(block *core.Block, stateUpdate *core.S
 		return errors.New("block's GlobalStateRoot does not match state update's NewRoot")
 	}
 
-	if cErr := core.VerifyClassHashes(classes); cErr != nil {
-		if errors.As(cErr, new(core.CantVerifyClassHashError)) {
-			for ; cErr != nil; cErr = errors.Unwrap(cErr) {
-				b.log.Debugw("Sanity checks failed", "number", block.Number, "hash",
-					block.Hash.ShortString(), "error", cErr.Error())
-			}
-		} else {
-			return cErr
-		}
+	if err := core.VerifyClassHashes(newClasses); err != nil {
+		return err
 	}
 
-	if bErr := core.VerifyBlockHash(block, b.network); bErr != nil {
-		if errors.As(bErr, new(core.CantVerifyTransactionHashError)) {
-			for ; bErr != nil; bErr = errors.Unwrap(bErr) {
-				b.log.Debugw("Sanity checks failed", "number", block.Number, "hash",
-					block.Hash.ShortString(), "error", bErr.Error())
-			}
-		} else {
-			return bErr
-		}
-	}
-
-	return nil
+	return core.VerifyBlockHash(block, b.network)
 }
 
 type txAndReceiptDBKey struct {
@@ -648,4 +653,15 @@ func (b *Blockchain) StateAtBlockHash(blockHash *felt.Felt) (core.StateReader, S
 	}
 
 	return core.NewStateSnapshot(core.NewState(txn), header.Number), txn.Discard, nil
+}
+
+// EventFilter returns an EventFilter object that is tied to a snapshot of the blockchain
+func (b *Blockchain) EventFilter(from *felt.Felt, keys []*felt.Felt) (*EventFilter, error) {
+	txn := b.database.NewTransaction(false)
+	latest, err := b.height(txn)
+	if err != nil {
+		return nil, err
+	}
+
+	return newEventFilter(txn, from, keys, 0, latest), nil
 }

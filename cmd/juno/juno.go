@@ -32,21 +32,24 @@ const (
 	dbPathF   = "db-path"
 	networkF  = "network"
 	pprofF    = "pprof"
+	colourF   = "colour"
 
-	defaultConfig   = ""
-	defaultRPCPort  = uint16(6060)
+	defaultConfig  = ""
+	defaultRPCPort = uint16(6060)
 	defaultGRPCPort = uint16(0)
-	defaultDBPath   = ""
-	defaultPprof    = false
+	defaultDBPath  = ""
+	defaultPprof   = false
+	defaultColour  = true
 
 	configFlagUsage   = "The yaml configuration file."
 	logLevelFlagUsage = "Options: debug, info, warn, error."
 	rpcPortUsage      = "The port on which the RPC server will listen for requests. " +
 		"Warning: this exposes the node to external requests and potentially DoS attacks."
 	grpcPortUsage = "The port on which the gRPC server will listen for requests."
-	dbPathUsage   = "Location of the database files."
-	networkUsage  = "Options: mainnet, goerli, goerli2, integration."
-	pprofUsage    = "Enables the pprof server and listens on port 9080."
+	dbPathUsage  = "Location of the database files."
+	networkUsage = "Options: mainnet, goerli, goerli2, integration."
+	pprofUsage   = "Enables the pprof server and listens on port 9080."
+	colourUsage  = "Uses --colour=false command to disable colourized outputs (ANSI Escape Codes)."
 )
 
 var Version string
@@ -79,7 +82,7 @@ func main() {
 	}
 }
 
-// NewCmd returns a command that can be exected with any of the Cobra Execute* functions.
+// NewCmd returns a command that can be executed with any of the Cobra Execute* functions.
 // The RunE field is set to the user-provided run function, allowing for robust testing setups.
 //
 //  1. NewCmd is called with a non-nil config and a run function.
@@ -129,6 +132,7 @@ func NewCmd(config *node.Config, run func(*cobra.Command, []string) error) *cobr
 	junoCmd.Flags().String(dbPathF, defaultDBPath, dbPathUsage)
 	junoCmd.Flags().Var(&defaultNetwork, networkF, networkUsage)
 	junoCmd.Flags().Bool(pprofF, defaultPprof, pprofUsage)
+	junoCmd.Flags().Bool(colourF, defaultColour, colourUsage)
 
 	return junoCmd
 }

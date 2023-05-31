@@ -45,6 +45,7 @@ func TestBlockByNumber(t *testing.T) {
 				expectedEventCount += uint64(len(r.Events))
 			}
 
+			assert.NotNil(t, block.EventsBloom)
 			assert.True(t, block.Hash.Equal(response.Hash))
 			assert.True(t, block.ParentHash.Equal(response.ParentHash))
 			assert.Equal(t, response.Number, block.Number)
@@ -88,6 +89,7 @@ func TestBlockLatest(t *testing.T) {
 				expectedEventCount += uint64(len(r.Events))
 			}
 
+			assert.NotNil(t, block.EventsBloom)
 			assert.True(t, block.Hash.Equal(response.Hash))
 			assert.True(t, block.ParentHash.Equal(response.ParentHash))
 			assert.Equal(t, response.Number, block.Number)
@@ -233,13 +235,7 @@ func TestClassV0(t *testing.T) {
 			var program feeder.Program
 			require.NoError(t, json.Unmarshal(response.V0.Program, &program))
 
-			assert.NotNil(t, class.BuiltinsHash)
-			assert.NotNil(t, class.BytecodeHash)
 			assert.NotEmpty(t, class.Program)
-
-			programHash, err := feeder.ProgramHash(&program, response.V0.Abi)
-			require.NoError(t, err)
-			assert.Equal(t, programHash, class.ProgramHash)
 		})
 	}
 }
@@ -360,4 +356,45 @@ func TestTransaction(t *testing.T) {
 		assert.Equal(t, responseTx.CallData, l1HandlerTx.CallData)
 		assert.Equal(t, responseTx.Version, l1HandlerTx.Version)
 	})
+}
+
+func TestClassV1(t *testing.T) {
+	client, serverClose := feeder.NewTestClient(utils.INTEGRATION)
+	t.Cleanup(serverClose)
+	adapter := adaptfeeder.New(client)
+
+	classHash := utils.HexToFelt(t, "0x1cd2edfb485241c4403254d550de0a097fa76743cd30696f714a491a454bad5")
+	class, err := adapter.Class(context.Background(), classHash)
+	require.NoError(t, err)
+
+	feederClass, err := client.ClassDefinition(context.Background(), classHash)
+	require.NoError(t, err)
+	compiled, err := client.CompiledClassDefinition(context.Background(), classHash)
+	require.NoError(t, err)
+
+	v1Class, ok := class.(*core.Cairo1Class)
+	require.True(t, ok)
+
+	assert.Equal(t, feederClass.V1.Abi, v1Class.Abi)
+	assert.Equal(t, feederClass.V1.Program, v1Class.Program)
+	assert.Equal(t, feederClass.V1.Version, v1Class.SemanticVersion)
+	assert.Equal(t, compiled, v1Class.Compiled)
+
+	assert.Equal(t, len(feederClass.V1.EntryPoints.External), len(v1Class.EntryPoints.External))
+	for i, v := range feederClass.V1.EntryPoints.External {
+		assert.Equal(t, v.Selector, v1Class.EntryPoints.External[i].Selector)
+		assert.Equal(t, v.Index, v1Class.EntryPoints.External[i].Index)
+	}
+
+	assert.Equal(t, len(feederClass.V1.EntryPoints.Constructor), len(v1Class.EntryPoints.Constructor))
+	for i, v := range feederClass.V1.EntryPoints.Constructor {
+		assert.Equal(t, v.Selector, v1Class.EntryPoints.Constructor[i].Selector)
+		assert.Equal(t, v.Index, v1Class.EntryPoints.Constructor[i].Index)
+	}
+
+	assert.Equal(t, len(feederClass.V1.EntryPoints.L1Handler), len(v1Class.EntryPoints.L1Handler))
+	for i, v := range feederClass.V1.EntryPoints.L1Handler {
+		assert.Equal(t, v.Selector, v1Class.EntryPoints.L1Handler[i].Selector)
+		assert.Equal(t, v.Index, v1Class.EntryPoints.L1Handler[i].Index)
+	}
 }

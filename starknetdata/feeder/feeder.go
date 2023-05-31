@@ -80,6 +80,7 @@ func adaptBlock(response *feeder.Block) (*core.Block, error) {
 			SequencerAddress: response.SequencerAddress,
 			TransactionCount: uint64(len(response.Transactions)),
 			EventCount:       eventCount,
+			EventsBloom:      core.EventsBloom(receipts),
 		},
 		Transactions: txns,
 		Receipts:     receipts,
@@ -274,7 +275,12 @@ func (f *Feeder) Class(ctx context.Context, classHash *felt.Felt) (core.Class, e
 
 	switch {
 	case response.V1 != nil:
-		return adaptCairo1Class(response.V1)
+		compiledClass, cErr := f.client.CompiledClassDefinition(ctx, classHash)
+		if cErr != nil {
+			return nil, cErr
+		}
+
+		return adaptCairo1Class(response.V1, compiledClass)
 	case response.V0 != nil:
 		return adaptCairo0Class(response.V0)
 	default:
@@ -282,7 +288,7 @@ func (f *Feeder) Class(ctx context.Context, classHash *felt.Felt) (core.Class, e
 	}
 }
 
-func adaptCairo1Class(response *feeder.SierraDefinition) (core.Class, error) {
+func adaptCairo1Class(response *feeder.SierraDefinition, compiledClass json.RawMessage) (core.Class, error) {
 	var err error
 
 	class := new(core.Cairo1Class)
@@ -309,6 +315,9 @@ func adaptCairo1Class(response *feeder.SierraDefinition) (core.Class, error) {
 		class.EntryPoints.Constructor[index] = core.SierraEntryPoint{Index: v.Index, Selector: v.Selector}
 	}
 
+	if err = json.Unmarshal(compiledClass, &class.Compiled); err != nil {
+		return nil, err
+	}
 	return class, nil
 }
 
@@ -336,36 +345,12 @@ func adaptCairo0Class(response *feeder.Cairo0Definition) (core.Class, error) {
 		return nil, err
 	}
 
-	builtins := make([]*felt.Felt, 0, len(program.Builtins))
-	for _, v := range program.Builtins {
-		builtin := new(felt.Felt).SetBytes([]byte(v))
-		builtins = append(builtins, builtin)
-	}
-	class.BuiltinsHash = crypto.PedersenArray(builtins...)
-
-	var err error
-	class.ProgramHash, err = feeder.ProgramHash(&program, response.Abi)
-	if err != nil {
-		return nil, err
-	}
-
-	bytecode := make([]*felt.Felt, 0, len(program.Data))
-	for _, v := range program.Data {
-		datum, fErr := new(felt.Felt).SetString(v)
-		if fErr != nil {
-			return nil, fErr
-		}
-
-		bytecode = append(bytecode, datum)
-	}
-	class.BytecodeHash = crypto.PedersenArray(bytecode...)
-
 	var compressedBuffer bytes.Buffer
 	gzipWriter := gzip.NewWriter(&compressedBuffer)
-	if _, err = gzipWriter.Write(response.Program); err != nil {
+	if _, err := gzipWriter.Write(response.Program); err != nil {
 		return nil, err
 	}
-	if err = gzipWriter.Close(); err != nil {
+	if err := gzipWriter.Close(); err != nil {
 		return nil, err
 	}
 
