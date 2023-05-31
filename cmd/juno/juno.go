@@ -33,18 +33,20 @@ const (
 	networkF  = "network"
 	pprofF    = "pprof"
 
-	defaultConfig  = ""
-	defaultRPCPort = uint16(6060)
-	defaultDBPath  = ""
-	defaultPprof   = false
+	defaultConfig   = ""
+	defaultRPCPort  = uint16(6060)
+	defaultGRPCPort = uint16(0)
+	defaultDBPath   = ""
+	defaultPprof    = false
 
 	configFlagUsage   = "The yaml configuration file."
 	logLevelFlagUsage = "Options: debug, info, warn, error."
 	rpcPortUsage      = "The port on which the RPC server will listen for requests. " +
 		"Warning: this exposes the node to external requests and potentially DoS attacks."
-	dbPathUsage  = "Location of the database files."
-	networkUsage = "Options: mainnet, goerli, goerli2, integration."
-	pprofUsage   = "Enables the pprof server and listens on port 9080."
+	grpcPortUsage = "The port on which the gRPC server will listen for requests."
+	dbPathUsage   = "Location of the database files."
+	networkUsage  = "Options: mainnet, goerli, goerli2, integration."
+	pprofUsage    = "Enables the pprof server and listens on port 9080."
 )
 
 var Version string
@@ -123,7 +125,7 @@ func NewCmd(config *node.Config, run func(*cobra.Command, []string) error) *cobr
 	junoCmd.Flags().StringVar(&cfgFile, configF, defaultConfig, configFlagUsage)
 	junoCmd.Flags().Var(&defaultLogLevel, logLevelF, logLevelFlagUsage)
 	junoCmd.Flags().Uint16(rpcPortF, defaultRPCPort, rpcPortUsage)
-	junoCmd.Flags().Uint16(grpcPortF, 0, "Todo grpc port usage")
+	junoCmd.Flags().Uint16(grpcPortF, defaultGRPCPort, grpcPortUsage)
 	junoCmd.Flags().String(dbPathF, defaultDBPath, dbPathUsage)
 	junoCmd.Flags().Var(&defaultNetwork, networkF, networkUsage)
 	junoCmd.Flags().Bool(pprofF, defaultPprof, pprofUsage)

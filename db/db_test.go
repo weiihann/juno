@@ -3,10 +3,9 @@ package db_test
 import (
 	"errors"
 	"fmt"
-	"testing"
-
 	"github.com/NethermindEth/juno/db"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 var errClose = errors.New("close error")
