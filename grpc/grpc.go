@@ -38,11 +38,10 @@ func (s *Server) Run(ctx context.Context) error {
 
 	go func() {
 		<-ctx.Done()
-		// todo Stop() vs GracefulStop()
 		s.srv.Stop()
 	}()
 
-	gen.RegisterDBServer(s.srv, handlers{s.db})
+	gen.RegisterKVServer(s.srv, handlers{s.db})
 
 	return s.srv.Serve(lis)
 }
