@@ -2,19 +2,51 @@ package vm
 
 import (
 	"context"
-	"reflect"
 	"testing"
+	"time"
 
+	"github.com/NethermindEth/juno/blockchain"
 	"github.com/NethermindEth/juno/clients/feeder"
 	"github.com/NethermindEth/juno/core"
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/juno/db/pebble"
-	"github.com/NethermindEth/juno/encoder"
 	adaptfeeder "github.com/NethermindEth/juno/starknetdata/feeder"
+	"github.com/NethermindEth/juno/sync"
 	"github.com/NethermindEth/juno/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestExecute(t *testing.T) {
+	testDB := pebble.NewMemTest()
+	bc := blockchain.New(testDB, utils.GOERLI2, utils.NewNopZapLogger())
+	client, closer := feeder.NewTestClient(utils.GOERLI2)
+	defer closer()
+	gw := adaptfeeder.New(client)
+	synchronizer := sync.New(bc, gw, utils.NewNopZapLogger())
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+
+	require.NoError(t, synchronizer.Run(ctx))
+	cancel()
+
+	t.Run("without class", func(t *testing.T) {
+		block, err := bc.BlockByNumber(3)
+		require.NoError(t, err)
+		txn, err := bc.TransactionByHash(utils.HexToFelt(t, "0xd842b658750948577d262c22eeae44ea8dd91688164c002a5808a3075f2297"))
+		require.NoError(t, err)
+		state, sCloser, err := bc.StateAtBlockNumber(block.Number)
+		t.Cleanup(func() {
+			require.NoError(t, sCloser())
+		})
+		require.NoError(t, err)
+		consumed, err := Execute(txn, nil, block.Number, block.Timestamp, state, utils.GOERLI2)
+		require.NoError(t, err)
+		require.Equal(t, "1350", consumed.Text(16))
+	})
+
+	t.Run("with class", func(t *testing.T) {
+	})
+}
 
 func TestV0Call(t *testing.T) {
 	testDB := pebble.NewMemTest()
@@ -32,9 +64,6 @@ func TestV0Call(t *testing.T) {
 	classHash := utils.HexToFelt(t, "0x3297a93c52357144b7da71296d7e8231c3e0959f0a1d37222204f2f7712010e")
 	simpleClass, err := gw.Class(context.Background(), classHash)
 	require.NoError(t, err)
-
-	require.NoError(t, encoder.RegisterType(reflect.TypeOf(core.Cairo0Class{})))
-	require.NoError(t, encoder.RegisterType(reflect.TypeOf(core.Cairo1Class{})))
 
 	testState := core.NewState(txn)
 	require.NoError(t, testState.Update(0, &core.StateUpdate{
