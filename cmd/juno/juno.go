@@ -34,22 +34,22 @@ const (
 	pprofF    = "pprof"
 	colourF   = "colour"
 
-	defaultConfig  = ""
-	defaultRPCPort = uint16(6060)
-	defaultGRPCPort = uint16(0)
-	defaultDBPath  = ""
-	defaultPprof   = false
-	defaultColour  = true
+	defaultConfig   = ""
+	defaultRPCPort  = 6060
+	defaultGRPCPort = 0
+	defaultDBPath   = ""
+	defaultPprof    = false
+	defaultColour   = true
 
 	configFlagUsage   = "The yaml configuration file."
 	logLevelFlagUsage = "Options: debug, info, warn, error."
 	rpcPortUsage      = "The port on which the RPC server will listen for requests. " +
 		"Warning: this exposes the node to external requests and potentially DoS attacks."
 	grpcPortUsage = "The port on which the gRPC server will listen for requests."
-	dbPathUsage  = "Location of the database files."
-	networkUsage = "Options: mainnet, goerli, goerli2, integration."
-	pprofUsage   = "Enables the pprof server and listens on port 9080."
-	colourUsage  = "Uses --colour=false command to disable colourized outputs (ANSI Escape Codes)."
+	dbPathUsage   = "Location of the database files."
+	networkUsage  = "Options: mainnet, goerli, goerli2, integration."
+	pprofUsage    = "Enables the pprof server and listens on port 9080."
+	colourUsage   = "Uses --colour=false command to disable colourized outputs (ANSI Escape Codes)."
 )
 
 var Version string
