@@ -13,6 +13,8 @@ import (
 )
 
 func TestClient(t *testing.T) {
+	t.Skip("manual testing")
+
 	conn, err := grpc.Dial(":8888", grpc.WithInsecure())
 	require.NoError(t, err)
 	defer conn.Close()
