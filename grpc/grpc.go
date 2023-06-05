@@ -18,12 +18,12 @@ type Server struct {
 	log  utils.SimpleLogger
 }
 
-func NewServer(port uint16, db db.DB, log utils.SimpleLogger) *Server {
+func NewServer(port uint16, database db.DB, log utils.SimpleLogger) *Server {
 	srv := grpc.NewServer()
 
 	return &Server{
 		srv:  srv,
-		db:   db,
+		db:   database,
 		port: port,
 		log:  log,
 	}
