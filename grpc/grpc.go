@@ -3,11 +3,12 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"net"
+
 	"github.com/NethermindEth/juno/db"
 	"github.com/NethermindEth/juno/grpc/gen"
 	"github.com/NethermindEth/juno/utils"
 	"google.golang.org/grpc"
-	"net"
 )
 
 type Server struct {

@@ -3,13 +3,14 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"io"
+	"testing"
+
 	"github.com/NethermindEth/juno/db"
 	"github.com/NethermindEth/juno/grpc/gen"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
-	"io"
-	"testing"
 )
 
 func TestClient(t *testing.T) {

@@ -3,7 +3,6 @@ package node
 import (
 	"context"
 	"fmt"
-	"github.com/NethermindEth/juno/grpc"
 	"path/filepath"
 	"reflect"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/NethermindEth/juno/clients/feeder"
 	"github.com/NethermindEth/juno/db"
 	"github.com/NethermindEth/juno/db/pebble"
+	"github.com/NethermindEth/juno/grpc"
 	"github.com/NethermindEth/juno/jsonrpc"
 	"github.com/NethermindEth/juno/pprof"
 	"github.com/NethermindEth/juno/rpc"
