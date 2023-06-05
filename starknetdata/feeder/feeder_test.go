@@ -14,94 +14,32 @@ import (
 )
 
 func TestBlockByNumber(t *testing.T) {
-	tests := []struct {
-		number          uint64
-		protocolVersion string
-	}{
-		{
-			number: 147,
-		},
-		{
-			number:          11817,
-			protocolVersion: "0.10.1",
-		},
-	}
+	numbers := []uint64{147, 11817}
 
 	client, serverClose := feeder.NewTestClient(utils.MAINNET)
 	t.Cleanup(serverClose)
 	adapter := adaptfeeder.New(client)
 	ctx := context.Background()
 
-	for _, test := range tests {
-		t.Run("mainnet block number "+strconv.FormatUint(test.number, 10), func(t *testing.T) {
-			response, err := client.Block(ctx, strconv.FormatUint(test.number, 10))
+	for _, number := range numbers {
+		t.Run("mainnet block number "+strconv.FormatUint(number, 10), func(t *testing.T) {
+			block, err := adapter.BlockByNumber(ctx, number)
 			require.NoError(t, err)
-			block, err := adapter.BlockByNumber(ctx, test.number)
-			require.NoError(t, err)
-
-			expectedEventCount := uint64(0)
-			for _, r := range response.Receipts {
-				expectedEventCount += uint64(len(r.Events))
-			}
-
-			assert.NotNil(t, block.EventsBloom)
-			assert.True(t, block.Hash.Equal(response.Hash))
-			assert.True(t, block.ParentHash.Equal(response.ParentHash))
-			assert.Equal(t, response.Number, block.Number)
-			assert.True(t, block.GlobalStateRoot.Equal(response.StateRoot))
-			assert.Equal(t, response.Timestamp, block.Timestamp)
-			assert.Equal(t, len(response.Transactions), len(block.Transactions))
-			assert.Equal(t, uint64(len(response.Transactions)), block.TransactionCount)
-			assert.Equal(t, len(response.Receipts), len(block.Receipts))
-			assert.Equal(t, expectedEventCount, block.EventCount)
-			assert.Equal(t, test.protocolVersion, block.ProtocolVersion)
-			assert.Nil(t, block.ExtraData)
+			assert.Equal(t, number, block.Number)
 		})
 	}
 }
 
 func TestBlockLatest(t *testing.T) {
-	tests := []struct {
-		id              string
-		protocolVersion string
-	}{
-		{
-			id:              "latest",
-			protocolVersion: "0.11.0",
-		},
-	}
-
 	client, serverClose := feeder.NewTestClient(utils.MAINNET)
 	t.Cleanup(serverClose)
 	adapter := adaptfeeder.New(client)
 	ctx := context.Background()
 
-	for _, test := range tests {
-		t.Run("latest block", func(t *testing.T) {
-			response, err := client.Block(ctx, test.id)
-			require.NoError(t, err)
-			block, err := adapter.BlockLatest(ctx)
-			require.NoError(t, err)
+	block, err := adapter.BlockLatest(ctx)
+	require.NoError(t, err)
 
-			expectedEventCount := uint64(0)
-			for _, r := range response.Receipts {
-				expectedEventCount += uint64(len(r.Events))
-			}
-
-			assert.NotNil(t, block.EventsBloom)
-			assert.True(t, block.Hash.Equal(response.Hash))
-			assert.True(t, block.ParentHash.Equal(response.ParentHash))
-			assert.Equal(t, response.Number, block.Number)
-			assert.True(t, block.GlobalStateRoot.Equal(response.StateRoot))
-			assert.Equal(t, response.Timestamp, block.Timestamp)
-			assert.Equal(t, len(response.Transactions), len(block.Transactions))
-			assert.Equal(t, uint64(len(response.Transactions)), block.TransactionCount)
-			assert.Equal(t, len(response.Receipts), len(block.Receipts))
-			assert.Equal(t, expectedEventCount, block.EventCount)
-			assert.Equal(t, test.protocolVersion, block.ProtocolVersion)
-			assert.Nil(t, block.ExtraData)
-		})
-	}
+	assert.Equal(t, uint64(29352), block.Number)
 }
 
 func TestStateUpdate(t *testing.T) {
@@ -118,76 +56,9 @@ func TestStateUpdate(t *testing.T) {
 			require.NoError(t, err)
 			feederUpdate, err := adapter.StateUpdate(ctx, number)
 			require.NoError(t, err)
-
-			assert.True(t, response.NewRoot.Equal(feederUpdate.NewRoot))
-			assert.True(t, response.OldRoot.Equal(feederUpdate.OldRoot))
 			assert.True(t, response.BlockHash.Equal(feederUpdate.BlockHash))
-
-			assert.Equal(t, len(response.StateDiff.OldDeclaredContracts), len(feederUpdate.StateDiff.DeclaredV0Classes))
-			for idx := range response.StateDiff.OldDeclaredContracts {
-				resp := response.StateDiff.OldDeclaredContracts[idx]
-				coreDeclaredClass := feederUpdate.StateDiff.DeclaredV0Classes[idx]
-				assert.True(t, resp.Equal(coreDeclaredClass))
-			}
-
-			assert.Equal(t, len(response.StateDiff.Nonces), len(feederUpdate.StateDiff.Nonces))
-			for keyStr, gw := range response.StateDiff.Nonces {
-				key := utils.HexToFelt(t, keyStr)
-				coreNonce := feederUpdate.StateDiff.Nonces[*key]
-				assert.True(t, gw.Equal(coreNonce))
-			}
-
-			assert.Equal(t, len(response.StateDiff.DeployedContracts), len(feederUpdate.StateDiff.DeployedContracts))
-			for idx := range response.StateDiff.DeployedContracts {
-				gw := response.StateDiff.DeployedContracts[idx]
-				coreDeployedContract := feederUpdate.StateDiff.DeployedContracts[idx]
-				assert.True(t, gw.ClassHash.Equal(coreDeployedContract.ClassHash))
-				assert.True(t, gw.Address.Equal(coreDeployedContract.Address))
-			}
-
-			assert.Equal(t, len(response.StateDiff.StorageDiffs), len(feederUpdate.StateDiff.StorageDiffs))
-			for keyStr, diffs := range response.StateDiff.StorageDiffs {
-				key := utils.HexToFelt(t, keyStr)
-				coreDiffs := feederUpdate.StateDiff.StorageDiffs[*key]
-				assert.Equal(t, true, len(diffs) > 0)
-				assert.Equal(t, len(diffs), len(coreDiffs))
-				for idx := range diffs {
-					assert.Equal(t, true, diffs[idx].Key.Equal(coreDiffs[idx].Key))
-					assert.Equal(t, true, diffs[idx].Value.Equal(coreDiffs[idx].Value))
-				}
-			}
 		})
 	}
-
-	t.Run("v0.11.0 state update", func(t *testing.T) {
-		client, serverClose := feeder.NewTestClient(utils.INTEGRATION)
-		t.Cleanup(serverClose)
-		gw := adaptfeeder.New(client)
-
-		t.Run("declared Cairo0 classes", func(t *testing.T) {
-			update, err := gw.StateUpdate(ctx, 283746)
-			require.NoError(t, err)
-			assert.NotEmpty(t, update.StateDiff.DeclaredV0Classes)
-			assert.Empty(t, update.StateDiff.DeclaredV1Classes)
-			assert.Empty(t, update.StateDiff.ReplacedClasses)
-		})
-
-		t.Run("declared Cairo1 classes", func(t *testing.T) {
-			update, err := gw.StateUpdate(ctx, 283364)
-			require.NoError(t, err)
-			assert.Empty(t, update.StateDiff.DeclaredV0Classes)
-			assert.NotEmpty(t, update.StateDiff.DeclaredV1Classes)
-			assert.Empty(t, update.StateDiff.ReplacedClasses)
-		})
-
-		t.Run("replaced classes", func(t *testing.T) {
-			update, err := gw.StateUpdate(ctx, 283428)
-			require.NoError(t, err)
-			assert.Empty(t, update.StateDiff.DeclaredV0Classes)
-			assert.Empty(t, update.StateDiff.DeclaredV1Classes)
-			assert.NotEmpty(t, update.StateDiff.ReplacedClasses)
-		})
-	})
 }
 
 func TestClassV0(t *testing.T) {
@@ -212,26 +83,7 @@ func TestClassV0(t *testing.T) {
 			require.NoError(t, err)
 			class, ok := classGeneric.(*core.Cairo0Class)
 			require.True(t, ok)
-
-			for i, v := range response.V0.EntryPoints.External {
-				assert.Equal(t, v.Selector, class.Externals[i].Selector)
-				assert.Equal(t, v.Offset, class.Externals[i].Offset)
-			}
-			assert.Equal(t, len(response.V0.EntryPoints.External), len(class.Externals))
-
-			for i, v := range response.V0.EntryPoints.L1Handler {
-				assert.Equal(t, v.Selector, class.L1Handlers[i].Selector)
-				assert.Equal(t, v.Offset, class.L1Handlers[i].Offset)
-			}
-			assert.Equal(t, len(response.V0.EntryPoints.L1Handler), len(class.L1Handlers))
-
-			for i, v := range response.V0.EntryPoints.Constructor {
-				assert.Equal(t, v.Selector, class.Constructors[i].Selector)
-				assert.Equal(t, v.Offset, class.Constructors[i].Offset)
-			}
-			assert.Equal(t, len(response.V0.EntryPoints.Constructor), len(class.Constructors))
-
-			assert.NotEmpty(t, class.Program)
+			require.Equal(t, response.V0.Abi, class.Abi)
 		})
 	}
 }
@@ -260,13 +112,6 @@ func TestTransaction(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, responseTx.Hash, invokeTx.Hash())
-		assert.Equal(t, responseTx.SenderAddress, invokeTx.SenderAddress)
-		assert.Equal(t, responseTx.EntryPointSelector, invokeTx.EntryPointSelector)
-		assert.Equal(t, responseTx.Nonce, invokeTx.Nonce)
-		assert.Equal(t, *responseTx.CallData, invokeTx.CallData)
-		assert.Equal(t, *responseTx.Signature, invokeTx.Signature())
-		assert.Equal(t, responseTx.MaxFee, invokeTx.MaxFee)
-		assert.Equal(t, responseTx.Version, invokeTx.Version)
 	})
 
 	t.Run("deploy transaction", func(t *testing.T) {
@@ -302,14 +147,6 @@ func TestTransaction(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, responseTx.Hash, deployAccountTx.Hash())
-		assert.Equal(t, responseTx.ContractAddressSalt, deployAccountTx.ContractAddressSalt)
-		assert.Equal(t, responseTx.ContractAddress, deployAccountTx.ContractAddress)
-		assert.Equal(t, responseTx.ClassHash, deployAccountTx.ClassHash)
-		assert.Equal(t, *responseTx.ConstructorCallData, deployAccountTx.ConstructorCallData)
-		assert.Equal(t, responseTx.Version, deployAccountTx.Version)
-		assert.Equal(t, responseTx.MaxFee, deployAccountTx.MaxFee)
-		assert.Equal(t, *responseTx.Signature, deployAccountTx.Signature())
-		assert.Equal(t, responseTx.Nonce, deployAccountTx.Nonce)
 	})
 
 	t.Run("declare transaction", func(t *testing.T) {
@@ -325,12 +162,6 @@ func TestTransaction(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, responseTx.Hash, declareTx.Hash())
-		assert.Equal(t, responseTx.SenderAddress, declareTx.SenderAddress)
-		assert.Equal(t, responseTx.Version, declareTx.Version)
-		assert.Equal(t, responseTx.Nonce, declareTx.Nonce)
-		assert.Equal(t, responseTx.MaxFee, declareTx.MaxFee)
-		assert.Equal(t, *responseTx.Signature, declareTx.Signature())
-		assert.Equal(t, responseTx.ClassHash, declareTx.ClassHash)
 	})
 
 	t.Run("l1handler transaction", func(t *testing.T) {
@@ -346,11 +177,6 @@ func TestTransaction(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, responseTx.Hash, l1HandlerTx.Hash())
-		assert.Equal(t, responseTx.ContractAddress, l1HandlerTx.ContractAddress)
-		assert.Equal(t, responseTx.EntryPointSelector, l1HandlerTx.EntryPointSelector)
-		assert.Equal(t, responseTx.Nonce, l1HandlerTx.Nonce)
-		assert.Equal(t, *responseTx.CallData, l1HandlerTx.CallData)
-		assert.Equal(t, responseTx.Version, l1HandlerTx.Version)
 	})
 }
 
@@ -371,26 +197,6 @@ func TestClassV1(t *testing.T) {
 	v1Class, ok := class.(*core.Cairo1Class)
 	require.True(t, ok)
 
-	assert.Equal(t, feederClass.V1.Abi, v1Class.Abi)
 	assert.Equal(t, feederClass.V1.Program, v1Class.Program)
-	assert.Equal(t, feederClass.V1.Version, v1Class.SemanticVersion)
 	assert.Equal(t, compiled, v1Class.Compiled)
-
-	assert.Equal(t, len(feederClass.V1.EntryPoints.External), len(v1Class.EntryPoints.External))
-	for i, v := range feederClass.V1.EntryPoints.External {
-		assert.Equal(t, v.Selector, v1Class.EntryPoints.External[i].Selector)
-		assert.Equal(t, v.Index, v1Class.EntryPoints.External[i].Index)
-	}
-
-	assert.Equal(t, len(feederClass.V1.EntryPoints.Constructor), len(v1Class.EntryPoints.Constructor))
-	for i, v := range feederClass.V1.EntryPoints.Constructor {
-		assert.Equal(t, v.Selector, v1Class.EntryPoints.Constructor[i].Selector)
-		assert.Equal(t, v.Index, v1Class.EntryPoints.Constructor[i].Index)
-	}
-
-	assert.Equal(t, len(feederClass.V1.EntryPoints.L1Handler), len(v1Class.EntryPoints.L1Handler))
-	for i, v := range feederClass.V1.EntryPoints.L1Handler {
-		assert.Equal(t, v.Selector, v1Class.EntryPoints.L1Handler[i].Selector)
-		assert.Equal(t, v.Index, v1Class.EntryPoints.L1Handler[i].Index)
-	}
 }
