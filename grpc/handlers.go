@@ -14,17 +14,16 @@ type handlers struct {
 func (h handlers) Tx(server gen.KV_TxServer) error {
 	dbTx := h.db.NewTransaction(false)
 	tx := newTx(dbTx)
-	defer tx.cleanup()
 
 	for {
 		cursor, err := server.Recv()
 		if err != nil {
-			return err
+			return db.CloseAndWrapOnError(tx.cleanup, err)
 		}
 
 		err = h.handleTxCursor(cursor, tx, server)
 		if err != nil {
-			return err
+			return db.CloseAndWrapOnError(tx.cleanup, err)
 		}
 	}
 }

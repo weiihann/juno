@@ -10,3 +10,5 @@ coverage:
         target: 80%
         threshold: 1%
         only_pulls: true
+ignore:
+  - "grpc/gen/*"

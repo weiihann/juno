@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"errors"
 	"github.com/NethermindEth/juno/db"
 )
 
@@ -32,9 +33,10 @@ func (t *tx) iterator(id uint32) (db.Iterator, error) {
 }
 
 func (t *tx) cleanup() error {
+	var err error
 	for _, it := range t.iterators {
-		it.Close()
+		err = errors.Join(err, it.Close())
 	}
 
-	return nil
+	return err
 }
