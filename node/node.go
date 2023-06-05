@@ -151,10 +151,6 @@ func makeHTTP(port uint16, rpcHandler *rpc.Handler, log utils.SimpleLogger) *jso
 	}, log)
 }
 
-func makeGRPC(port uint16, db db.DB, log utils.Logger) *grpc.Server {
-	return grpc.NewServer(port, db, log)
-}
-
 // Run starts Juno node by opening the DB, initialising services.
 // All the services blocking and any errors returned by service run function is logged.
 // Run will wait for all services to return before exiting.
@@ -193,7 +189,7 @@ func (n *Node) Run(ctx context.Context) {
 	}
 
 	if n.cfg.GRPCPort > 0 {
-		n.services = append(n.services, makeGRPC(n.cfg.GRPCPort, n.db, n.log))
+		n.services = append(n.services, grpc.NewServer(n.cfg.GRPCPort, n.db, n.log))
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
