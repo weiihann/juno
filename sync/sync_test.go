@@ -158,14 +158,13 @@ func TestReorg(t *testing.T) {
 
 	testDB := pebble.NewMemTest()
 
-	t.Run("sync to integration for 2 blocks", func(t *testing.T) {
-		bc := blockchain.New(testDB, utils.INTEGRATION, utils.NewNopZapLogger())
-		synchronizer := New(bc, integGw, utils.NewNopZapLogger())
+	// sync to integration for 2 blocks
+	bc := blockchain.New(testDB, utils.INTEGRATION, utils.NewNopZapLogger())
+	synchronizer := New(bc, integGw, utils.NewNopZapLogger())
 
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-		require.NoError(t, synchronizer.Run(ctx))
-		cancel()
-	})
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	require.NoError(t, synchronizer.Run(ctx))
+	cancel()
 
 	t.Run("resync to mainnet with the same db", func(t *testing.T) {
 		bc := blockchain.New(testDB, utils.MAINNET, utils.NewNopZapLogger())

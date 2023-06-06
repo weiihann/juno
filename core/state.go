@@ -190,7 +190,7 @@ func (s *State) globalTrie(bucket db.Bucket, newTrie trie.NewTrieFunc) (*trie.Tr
 	return gTrie, closer, nil
 }
 
-func (s *State) expectRoot(root *felt.Felt) error {
+func (s *State) verifyStateUpdateRoot(root *felt.Felt) error {
 	currentRoot, err := s.Root()
 	if err != nil {
 		return err
@@ -207,7 +207,7 @@ func (s *State) expectRoot(root *felt.Felt) error {
 // old or new root does not match the state's old or new roots,
 // [ErrMismatchedRoot] is returned.
 func (s *State) Update(blockNumber uint64, update *StateUpdate, declaredClasses map[felt.Felt]Class) error {
-	err := s.expectRoot(update.OldRoot)
+	err := s.verifyStateUpdateRoot(update.OldRoot)
 	if err != nil {
 		return err
 	}
@@ -219,7 +219,7 @@ func (s *State) Update(blockNumber uint64, update *StateUpdate, declaredClasses 
 		}
 	}
 
-	if err = s.updateDeclaredClasses(update.StateDiff.DeclaredV1Classes, false); err != nil {
+	if err = s.updateDeclaredClassesTrie(update.StateDiff.DeclaredV1Classes, false); err != nil {
 		return err
 	}
 
@@ -243,7 +243,7 @@ func (s *State) Update(blockNumber uint64, update *StateUpdate, declaredClasses 
 		return err
 	}
 
-	return s.expectRoot(update.NewRoot)
+	return s.verifyStateUpdateRoot(update.NewRoot)
 }
 
 func (s *State) updateContracts(stateTrie *trie.Trie, blockNumber uint64, diff *StateDiff, logChanges bool) error {
@@ -421,7 +421,7 @@ func calculateContractCommitment(storageRoot, classHash, nonce *felt.Felt) *felt
 	return crypto.Pedersen(crypto.Pedersen(crypto.Pedersen(classHash, storageRoot), nonce), &felt.Zero)
 }
 
-func (s *State) updateDeclaredClasses(declaredClasses []DeclaredV1Class, revert bool) error {
+func (s *State) updateDeclaredClassesTrie(declaredClasses []DeclaredV1Class, revert bool) error {
 	classesTrie, classesCloser, err := s.classesTrie()
 	if err != nil {
 		return err
@@ -457,7 +457,7 @@ func (s *State) ContractIsAlreadyDeployedAt(addr *felt.Felt, blockNumber uint64)
 }
 
 func (s *State) Revert(blockNumber uint64, update *StateUpdate) error {
-	err := s.expectRoot(update.NewRoot)
+	err := s.verifyStateUpdateRoot(update.NewRoot)
 	if err != nil {
 		return err
 	}
@@ -465,7 +465,7 @@ func (s *State) Revert(blockNumber uint64, update *StateUpdate) error {
 	// todo: remove classes from storage
 
 	// update declared classes trie
-	if err = s.updateDeclaredClasses(update.StateDiff.DeclaredV1Classes, true); err != nil {
+	if err = s.updateDeclaredClassesTrie(update.StateDiff.DeclaredV1Classes, true); err != nil {
 		return err
 	}
 
@@ -495,7 +495,7 @@ func (s *State) Revert(blockNumber uint64, update *StateUpdate) error {
 		}
 	}
 
-	return s.expectRoot(update.OldRoot)
+	return s.verifyStateUpdateRoot(update.OldRoot)
 }
 
 func (s *State) purgeContract(addr *felt.Felt) error {
