@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"errors"
-
 	"github.com/NethermindEth/juno/blockchain"
 	"github.com/NethermindEth/juno/core"
 	"github.com/NethermindEth/juno/core/felt"
@@ -760,4 +759,11 @@ func (h *Handler) Call(call *FunctionCall, id *BlockID) ([]*felt.Felt, *jsonrpc.
 		return nil, &contractErr
 	}
 	return res, nil
+}
+
+func (h *Handler) EstimateFee(txn *BroadcastedTransaction, id *BlockID) (*FeeEstimate, *jsonrpc.Error) {
+	declaredClass, err := AdaptDeclaredClass(txn.ContractClass)
+	if err != nil {
+		return nil, jsonrpc.Err(jsonrpc.InvalidParams, err.Error())
+	}
 }

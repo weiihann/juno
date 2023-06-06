@@ -1,7 +1,9 @@
 package rpc
 
 import (
+	"encoding/json"
 	"errors"
+	"github.com/NethermindEth/juno/core"
 
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/ethereum/go-ethereum/common"
@@ -74,4 +76,20 @@ type TransactionReceipt struct {
 	MessagesSent    []*MsgToL1      `json:"messages_sent"`
 	Events          []*Event        `json:"events"`
 	ContractAddress *felt.Felt      `json:"contract_address,omitempty"`
+}
+
+// https://github.com/starkware-libs/starknet-specs/blob/a789ccc3432c57777beceaa53a34a7ae2f25fda0/api/starknet_api_openrpc.json#L1273-L1287
+type BroadcastedTransaction struct {
+	Transaction
+	ContractClass json.RawMessage `json:"contract_class,omitempty"`
+}
+
+type FeeEstimate struct {
+	GasConsumed *felt.Felt `json:"gas_consumed"`
+	GasPrice    *felt.Felt `json:"gas_price"`
+	OverallFee  *felt.Felt `json:"overall_fee"`
+}
+
+func AdaptTransaction(txn *rpc.Transaction) (core.Transaction, error) {
+
 }
