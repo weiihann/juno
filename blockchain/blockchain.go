@@ -13,8 +13,6 @@ import (
 	"github.com/NethermindEth/juno/utils"
 )
 
-const lenOfByteSlice = 8
-
 //go:generate mockgen -destination=../mocks/mock_blockchain.go -package=mocks github.com/NethermindEth/juno/blockchain Reader
 type Reader interface {
 	Height() (height uint64, err error)
@@ -254,8 +252,7 @@ func (b *Blockchain) Store(block *core.Block, stateUpdate *core.StateUpdate, new
 
 		// Head of the blockchain is maintained as follows:
 		// [db.ChainHeight]() -> (BlockNumber)
-		heightBin := make([]byte, lenOfByteSlice)
-		binary.BigEndian.PutUint64(heightBin, block.Number)
+		heightBin := core.BlockNumber(block.Number).ToBytes()
 		return txn.Set(db.ChainHeight.Key(), heightBin)
 	})
 }
@@ -306,9 +303,7 @@ func (b *Blockchain) verifyBlock(txn db.Transaction, block *core.Block) error {
 // "()" are additional keys appended to the prefix or multiple values marshalled together
 // "->" represents a key value pair.
 func storeBlockHeader(txn db.Transaction, header *core.Header) error {
-	numBytes := make([]byte, lenOfByteSlice)
-	binary.BigEndian.PutUint64(numBytes, header.Number)
-
+	numBytes := core.BlockNumber(header.Number).ToBytes()
 	if err := txn.Set(db.BlockHeaderNumbersByHash.Key(header.Hash.Marshal()), numBytes); err != nil {
 		return err
 	}
@@ -327,8 +322,7 @@ func storeBlockHeader(txn db.Transaction, header *core.Header) error {
 
 // blockHeaderByNumber retrieves a block header from database by its number
 func blockHeaderByNumber(txn db.Transaction, number uint64) (*core.Header, error) {
-	numBytes := make([]byte, lenOfByteSlice)
-	binary.BigEndian.PutUint64(numBytes, number)
+	numBytes := core.BlockNumber(number).ToBytes()
 
 	var header *core.Header
 	if err := txn.Get(db.BlockHeadersByNumber.Key(numBytes), func(val []byte) error {
@@ -377,8 +371,7 @@ func transactionsByBlockNumber(txn db.Transaction, number uint64) ([]core.Transa
 	}
 
 	var txs []core.Transaction
-	numBytes := make([]byte, lenOfByteSlice)
-	binary.BigEndian.PutUint64(numBytes, number)
+	numBytes := core.BlockNumber(number).ToBytes()
 
 	prefix := db.TransactionsByBlockNumberAndIndex.Key(numBytes)
 	for iterator.Seek(prefix); iterator.Valid(); iterator.Next() {
@@ -413,8 +406,7 @@ func receiptsByBlockNumber(txn db.Transaction, number uint64) ([]*core.Transacti
 	}
 
 	var receipts []*core.TransactionReceipt
-	numBytes := make([]byte, lenOfByteSlice)
-	binary.BigEndian.PutUint64(numBytes, number)
+	numBytes := core.BlockNumber(number).ToBytes()
 
 	prefix := db.ReceiptsByBlockNumberAndIndex.Key(numBytes)
 	for iterator.Seek(prefix); iterator.Valid(); iterator.Next() {
@@ -453,8 +445,7 @@ func blockByHash(txn db.Transaction, hash *felt.Felt) (*core.Block, error) {
 }
 
 func storeStateUpdate(txn db.Transaction, blockNumber uint64, update *core.StateUpdate) error {
-	numBytes := make([]byte, lenOfByteSlice)
-	binary.BigEndian.PutUint64(numBytes, blockNumber)
+	numBytes := core.BlockNumber(blockNumber).ToBytes()
 
 	updateBytes, err := encoder.Marshal(update)
 	if err != nil {
@@ -468,8 +459,7 @@ func storeStateUpdate(txn db.Transaction, blockNumber uint64, update *core.State
 }
 
 func stateUpdateByNumber(txn db.Transaction, blockNumber uint64) (*core.StateUpdate, error) {
-	numBytes := make([]byte, lenOfByteSlice)
-	binary.BigEndian.PutUint64(numBytes, blockNumber)
+	numBytes := core.BlockNumber(blockNumber).ToBytes()
 
 	var update *core.StateUpdate
 	if err := txn.Get(db.StateUpdatesByBlockNumber.Key(numBytes), func(val []byte) error {
