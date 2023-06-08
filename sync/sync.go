@@ -181,17 +181,15 @@ func (s *Synchronizer) syncBlocks(syncCtx context.Context) {
 	}()
 
 	fetchers := stream.New().WithMaxGoroutines(runtime.NumCPU())
-	fetchersSem := make(chan struct{}, runtime.NumCPU())
 	verifiers := stream.New().WithMaxGoroutines(runtime.NumCPU())
-
-	pendingPollTicker := time.NewTicker(defaultPendingPollInterval)
-	pendingPollSem := make(chan struct{}, 1)
 
 	streamCtx, streamCancel := context.WithCancel(syncCtx)
 
 	nextHeight := s.nextHeight()
 	startingHeight := nextHeight
 	s.StartingBlockNumber = &startingHeight
+
+	go s.pollPending(syncCtx)
 
 	for {
 		select {
@@ -201,31 +199,16 @@ func (s *Synchronizer) syncBlocks(syncCtx context.Context) {
 				streamCancel()
 				fetchers.Wait()
 				verifiers.Wait()
-				pendingPollTicker.Stop()
-				pendingPollSem <- struct{}{}
 				return
 			default:
 				streamCtx, streamCancel = context.WithCancel(syncCtx)
 				nextHeight = s.nextHeight()
 				s.log.Warnw("Rolling back sync process", "height", nextHeight)
 			}
-		case <-pendingPollTicker.C:
-			select {
-			case pendingPollSem <- struct{}{}:
-				go func() {
-					if err := s.pollPending(syncCtx); err != nil {
-						s.log.Debugw("Error while trying to poll pending block", "err", err)
-					}
-					<-pendingPollSem
-				}()
-			default:
-				// poll already in-progress, ignore the tick
-			}
-		case fetchersSem <- struct{}{}:
+		default:
 			curHeight, curStreamCtx, curCancel := nextHeight, streamCtx, streamCancel
 			fetchers.Go(func() stream.Callback {
 				cb := s.fetcherTask(curStreamCtx, curHeight, verifiers, curCancel)
-				<-fetchersSem
 				return cb
 			})
 			nextHeight++
@@ -233,7 +216,23 @@ func (s *Synchronizer) syncBlocks(syncCtx context.Context) {
 	}
 }
 
-func (s *Synchronizer) pollPending(ctx context.Context) error {
+func (s *Synchronizer) pollPending(ctx context.Context) {
+	pendingPollTicker := time.NewTicker(defaultPendingPollInterval)
+	for {
+		select {
+		case <-ctx.Done():
+			pendingPollTicker.Stop()
+			return
+		case <-pendingPollTicker.C:
+			err := s.fetchAndStorePending(ctx)
+			if err != nil {
+				s.log.Debugw("Error while trying to poll pending block", "err", err)
+			}
+		}
+	}
+}
+
+func (s *Synchronizer) fetchAndStorePending(ctx context.Context) error {
 	if s.HighestBlockHeader == nil {
 		return nil
 	}
