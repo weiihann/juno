@@ -462,7 +462,9 @@ func (s *State) Revert(blockNumber uint64, update *StateUpdate) error {
 		return err
 	}
 
-	// todo: remove classes from storage
+	if err = s.removeDeclaredClasses(update.StateDiff.DeclaredV0Classes, update.StateDiff.DeclaredV1Classes); err != nil {
+		return err
+	}
 
 	// update declared classes trie
 	if err = s.updateDeclaredClassesTrie(update.StateDiff.DeclaredV1Classes, true); err != nil {
@@ -496,6 +498,24 @@ func (s *State) Revert(blockNumber uint64, update *StateUpdate) error {
 	}
 
 	return s.verifyStateUpdateRoot(update.OldRoot)
+}
+
+func (s *State) removeDeclaredClasses(v0Classes []*felt.Felt, v1Classes []DeclaredV1Class) error {
+	var classKeys [][]byte
+
+	for _, class := range v0Classes {
+		classKeys = append(classKeys, db.Class.Key(class.Marshal()))
+	}
+	for _, class := range v1Classes {
+		classKeys = append(classKeys, db.Class.Key(class.ClassHash.Marshal()))
+	}
+
+	for _, key := range classKeys {
+		if err := s.txn.Delete(key); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *State) purgeContract(addr *felt.Felt) error {
