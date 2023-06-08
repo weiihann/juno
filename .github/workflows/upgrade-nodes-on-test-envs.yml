@@ -3,7 +3,7 @@ name: upgrade nodes on test env
 on:
   push:
     branches:
-      - main
+      - wojciechos/deploy_workflow
   release:
     types: [created]
 
