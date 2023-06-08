@@ -15,13 +15,13 @@ jobs:
       run: echo "DOCKER_IMAGE_TAG=${{ github.actor }}-${{ github.sha }}" >> $GITHUB_ENV
 
     - name: Trigger build_and_push_docker_image
-        id: trigger-build
-        uses: benc-uk/workflow-dispatch@v1
-        with:
-          workflow: Build and publish Docker image
-          token: ${{ secrets.REPOSITORY_DISPATCH_TOKEN }}
-          ref: ${{ github.ref }}
-          inputs: '{"tag": "${{ env.DOCKER_IMAGE_TAG }}"}'
+      id: trigger-build
+      uses: benc-uk/workflow-dispatch@v1
+      with:
+        workflow: Build and publish Docker image
+        token: ${{ secrets.REPOSITORY_DISPATCH_TOKEN }}
+        ref: ${{ github.ref }}
+        inputs: '{"tag": "${{ env.DOCKER_IMAGE_TAG }}"}'
 
     - name: Wait for build_and_push_docker_image workflow to complete
       uses: fountainhead/action-wait-for-check@v1.1.0
