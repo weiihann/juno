@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"encoding/hex"
 	"fmt"
@@ -277,6 +278,32 @@ func NewCmd(config *node.Config, run func(*cobra.Command, []string) error) *cobr
 					First07Block:      0,
 					UnverifiableRange: []uint64{uint64(unverifRange[0]), uint64(unverifRange[1])},
 				},
+			}
+		}
+
+		// Extract private key if provided in a file
+		if v.IsSet(p2pPrivateKey) {
+			if _, err := os.Stat(v.GetString(p2pPrivateKey)); err == nil {
+				file, err := os.Open(v.GetString(p2pPrivateKey))
+				if err != nil {
+					return err
+				}
+				defer file.Close()
+
+				scanner := bufio.NewScanner(file)
+				for scanner.Scan() {
+					line := scanner.Text()
+					if strings.HasPrefix(line, "P2P Private Key:") {
+						key := strings.TrimPrefix(line, "P2P Private Key:")
+						key = strings.TrimSpace(key)
+						config.P2PPrivateKey = key
+						break
+					}
+				}
+
+				if err := scanner.Err(); err != nil {
+					return err
+				}
 			}
 		}
 
