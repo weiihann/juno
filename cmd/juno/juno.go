@@ -406,6 +406,10 @@ func GenP2PKeyPair() *cobra.Command {
 			pubHex := make([]byte, hex.EncodedLen(len(rawPub)))
 			hex.Encode(pubHex, rawPub)
 
+			output := "P2P Private Key: " + string(privHex) + "\n" +
+				"P2P Public Key: " + string(pubHex) + "\n" +
+				"P2P PeerID: " + id.String()
+
 			if filename != "" {
 				file, err := os.Create(filename)
 				if err != nil {
@@ -413,13 +417,9 @@ func GenP2PKeyPair() *cobra.Command {
 				}
 				defer file.Close()
 
-				fmt.Fprintln(file, "P2P Private Key:", string(privHex))
-				fmt.Fprintln(file, "P2P Public Key:", string(pubHex))
-				fmt.Fprintln(file, "P2P PeerID:", id)
+				fmt.Fprintln(file, output)
 			} else {
-				fmt.Println("P2P Private Key:", string(privHex))
-				fmt.Println("P2P Public Key:", string(pubHex))
-				fmt.Println("P2P PeerID:", id)
+				fmt.Fprintln(os.Stdout, output)
 			}
 
 			return nil
