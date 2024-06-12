@@ -149,7 +149,7 @@ const (
 		"These peers can be either Feeder or regular nodes."
 	p2pFeederNodeUsage = "EXPERIMENTAL: Run juno as a feeder node which will only sync from feeder gateway and gossip the new" +
 		" blocks to the network."
-	p2pPrivateKeyUsage   = "EXPERIMENTAL: Hexadecimal representation of a private key on the Ed25519 elliptic curve."
+	p2pPrivateKeyUsage   = "EXPERIMENTAL: Hexadecimal representation of a private key on the Ed25519 elliptic curve. Also accepts a file path."
 	metricsUsage         = "Enables the Prometheus metrics endpoint on the default port."
 	metricsHostUsage     = "The interface on which the Prometheus endpoint will listen for requests."
 	metricsPortUsage     = "The port on which the Prometheus endpoint will listen for requests."
@@ -291,15 +291,8 @@ func NewCmd(config *node.Config, run func(*cobra.Command, []string) error) *cobr
 				defer file.Close()
 
 				scanner := bufio.NewScanner(file)
-				for scanner.Scan() {
-					line := scanner.Text()
-					if strings.HasPrefix(line, "P2P Private Key:") {
-						key := strings.TrimPrefix(line, "P2P Private Key:")
-						key = strings.TrimSpace(key)
-						config.P2PPrivateKey = key
-						break
-					}
-				}
+				scanner.Scan()
+				config.P2PPrivateKey = strings.TrimSpace(strings.TrimPrefix(scanner.Text(), "P2P Private Key:"))
 
 				if err := scanner.Err(); err != nil {
 					return err

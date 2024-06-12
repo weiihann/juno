@@ -682,29 +682,50 @@ func TestGenP2PKeyPair(t *testing.T) {
 }
 
 func TestP2PPrivateKey(t *testing.T) {
-	// Create a temporary file
-	tmpfile, err := os.CreateTemp("", "temp")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.Remove(tmpfile.Name()) // clean up
-
-	// Write the keys to the file
 	privateKey := "38c54451f80617955671608da06ed6dd1749d66263103a9118235ab1ea2b3e4503bb86b895e17fc1618359d13e998ca05aa60751b762bf26ac570ac1e575ad81"
-	content := fmt.Sprintf("P2P Private Key: %s\n", privateKey)
-	if _, err := tmpfile.WriteString(content); err != nil {
-		t.Fatal(err)
-	}
-	if err := tmpfile.Close(); err != nil {
-		t.Fatal(err)
-	}
 
-	// Pass the lines to the command
-	config := new(node.Config)
-	cmd := juno.NewCmd(config, func(_ *cobra.Command, _ []string) error { return nil })
-	cmd.SetArgs([]string{"--p2p-private-key", tmpfile.Name()})
-	require.NoError(t, cmd.Execute())
-	require.Equal(t, privateKey, config.P2PPrivateKey)
+	t.Run("private key with message in a file", func(t *testing.T) {
+		tmpfile, err := os.CreateTemp("", "temp")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer os.Remove(tmpfile.Name())
+
+		content := fmt.Sprintf("P2P Private Key: %s\n", privateKey)
+		if _, err := tmpfile.WriteString(content); err != nil {
+			t.Fatal(err)
+		}
+		if err := tmpfile.Close(); err != nil {
+			t.Fatal(err)
+		}
+
+		config := new(node.Config)
+		cmd := juno.NewCmd(config, func(_ *cobra.Command, _ []string) error { return nil })
+		cmd.SetArgs([]string{"--p2p-private-key", tmpfile.Name()})
+		require.NoError(t, cmd.Execute())
+		require.Equal(t, privateKey, config.P2PPrivateKey)
+	})
+
+	t.Run("plain private key in a file", func(t *testing.T) {
+		tmpfile, err := os.CreateTemp("", "temp")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer os.Remove(tmpfile.Name())
+
+		if _, err := tmpfile.WriteString(privateKey); err != nil {
+			t.Fatal(err)
+		}
+		if err := tmpfile.Close(); err != nil {
+			t.Fatal(err)
+		}
+
+		config := new(node.Config)
+		cmd := juno.NewCmd(config, func(_ *cobra.Command, _ []string) error { return nil })
+		cmd.SetArgs([]string{"--p2p-private-key", tmpfile.Name()})
+		require.NoError(t, cmd.Execute())
+		require.Equal(t, privateKey, config.P2PPrivateKey)
+	})
 }
 
 func tempCfgFile(t *testing.T, cfg string) string {
