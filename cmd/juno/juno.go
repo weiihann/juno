@@ -212,7 +212,7 @@ func main() {
 //  3. The config struct is populated.
 //  4. Cobra calls the run function.
 //
-//nolint:funlen
+//nolint:funlen,gocyclo
 func NewCmd(config *node.Config, run func(*cobra.Command, []string) error) *cobra.Command {
 	junoCmd := &cobra.Command{
 		Use:     "juno [flags]",
@@ -379,7 +379,9 @@ func NewCmd(config *node.Config, run func(*cobra.Command, []string) error) *cobr
 }
 
 func GenP2PKeyPair() *cobra.Command {
-	return &cobra.Command{
+	var filename string
+
+	cmd := &cobra.Command{
 		Use:   "genp2pkeypair",
 		Short: "Generate private key pair for p2p.",
 		RunE: func(*cobra.Command, []string) error {
@@ -395,7 +397,6 @@ func GenP2PKeyPair() *cobra.Command {
 
 			privHex := make([]byte, hex.EncodedLen(len(rawPriv)))
 			hex.Encode(privHex, rawPriv)
-			fmt.Println("P2P Private Key:", string(privHex))
 
 			rawPub, err := pub.Raw()
 			if err != nil {
@@ -404,10 +405,28 @@ func GenP2PKeyPair() *cobra.Command {
 
 			pubHex := make([]byte, hex.EncodedLen(len(rawPub)))
 			hex.Encode(pubHex, rawPub)
-			fmt.Println("P2P Public Key:", string(pubHex))
 
-			fmt.Println("P2P PeerID:", id)
+			if filename != "" {
+				file, err := os.Create(filename)
+				if err != nil {
+					return err
+				}
+				defer file.Close()
+
+				fmt.Fprintln(file, "P2P Private Key:", string(privHex))
+				fmt.Fprintln(file, "P2P Public Key:", string(pubHex))
+				fmt.Fprintln(file, "P2P PeerID:", id)
+			} else {
+				fmt.Println("P2P Private Key:", string(privHex))
+				fmt.Println("P2P Public Key:", string(pubHex))
+				fmt.Println("P2P PeerID:", id)
+			}
+
 			return nil
 		},
 	}
+
+	cmd.Flags().StringVarP(&filename, "file", "f", "", "Optional file to write the keys to")
+
+	return cmd
 }
