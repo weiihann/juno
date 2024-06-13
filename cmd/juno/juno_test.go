@@ -679,6 +679,11 @@ network: sepolia
 func TestGenP2PKeyPair(t *testing.T) {
 	cmd := juno.GenP2PKeyPair()
 	require.NoError(t, cmd.Execute())
+
+	tmpfile, err := os.CreateTemp("", "temp")
+	require.NoError(t, err)
+	cmd.SetArgs([]string{"--file", tmpfile.Name()})
+	require.NoError(t, cmd.Execute())
 }
 
 func TestP2PPrivateKeyFile(t *testing.T) {
