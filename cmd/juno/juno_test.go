@@ -681,7 +681,7 @@ func TestGenP2PKeyPair(t *testing.T) {
 	require.NoError(t, cmd.Execute())
 }
 
-func TestP2PPrivateKey(t *testing.T) {
+func TestP2PPrivateKeyFile(t *testing.T) {
 	privateKey := "38c54451f80617955671608da06ed6dd1749d66263103a9118235ab1ea2b3e4503bb86b895e17fc1618359d13e998ca05aa60751b762bf26ac570ac1e575ad81"
 
 	t.Run("private key with message in a file", func(t *testing.T) {
@@ -701,7 +701,7 @@ func TestP2PPrivateKey(t *testing.T) {
 
 		config := new(node.Config)
 		cmd := juno.NewCmd(config, func(_ *cobra.Command, _ []string) error { return nil })
-		cmd.SetArgs([]string{"--p2p-private-key", tmpfile.Name()})
+		cmd.SetArgs([]string{"--p2p-private-key-file", tmpfile.Name()})
 		require.NoError(t, cmd.Execute())
 		require.Equal(t, privateKey, config.P2PPrivateKey)
 	})
@@ -722,7 +722,7 @@ func TestP2PPrivateKey(t *testing.T) {
 
 		config := new(node.Config)
 		cmd := juno.NewCmd(config, func(_ *cobra.Command, _ []string) error { return nil })
-		cmd.SetArgs([]string{"--p2p-private-key", tmpfile.Name()})
+		cmd.SetArgs([]string{"--p2p-private-key-file", tmpfile.Name()})
 		require.NoError(t, cmd.Execute())
 		require.Equal(t, privateKey, config.P2PPrivateKey)
 	})
