@@ -11,3 +11,4 @@ config/
 
 # pyenv
 .python-version
+p2p-dbs

@@ -1,4 +1,5 @@
 .DEFAULT_GOAL := help
+IP_ADDRESS := $(shell ifconfig en0 | grep inet | awk '$$1=="inet" {print $$2}')
 
 .PHONY: vm
 
@@ -90,7 +91,7 @@ help: ## show this help
 feedernode: juno-cached
 	./build/juno \
 	--network=sepolia \
-	--log-level=debug \
+	--log-level=info \
 	--db-path=./p2p-dbs/feedernode \
 	--p2p \
 	--p2p-feeder-node \
@@ -103,13 +104,13 @@ node1: juno-cached
 	rm -rf ./p2p-dbs/node1/ && \
 	./build/juno \
 	--network=sepolia \
-	--log-level=debug \
+	--log-level=info \
 	--metrics \
 	--db-path=./p2p-dbs/node1 \
 	--p2p \
-	--p2p-peers=/ip4/127.0.0.1/tcp/7777/p2p/12D3KooWLdURCjbp1D7hkXWk6ZVfcMDPtsNnPHuxoTcWXFtvrxGG \
+	--p2p-peers=/ip4/$(IP_ADDRESS)/tcp/7777/p2p/12D3KooWLdURCjbp1D7hkXWk6ZVfcMDPtsNnPHuxoTcWXFtvrxGG \
 	--p2p-addr=/ip4/0.0.0.0/tcp/7778 \
-	--p2p-private-key="8aeffc26c3c371565dbe634c5248ae26f4fa5c33bc8f7328ac95e73fb94eaf263550f02449521f7cf64af17d248c5f170be46c06986a29803124c0819cb8fac3" \
+	--p2p-private-key="beffe878f402f6d39dd56acffe726dec3dcbffc8fb359c79351a75b382ba070b99d378d539994aa276020ff1fa624ab08419b9ac311925ea41eb7354c2214113" \
 	--metrics-port=9091
 
 #	--p2p-peers=/ip4/127.0.0.1/tcp/7778/p2p/12D3KooWDQVMmK6cQrfFcWUoFF8Ch5vYegfwiP5Do2SFC2NAXeBk \
@@ -117,21 +118,21 @@ node1: juno-cached
 node2:
 	./build/juno \
 	--network=sepolia \
-	--log-level=debug \
+	--log-level=info \
 	--db-path=./p2p-dbs/node2 \
 	--p2p \
-	--p2p-peers=/ip4/127.0.0.1/tcp/7777/p2p/12D3KooWLdURCjbp1D7hkXWk6ZVfcMDPtsNnPHuxoTcWXFtvrxGG \
-	--p2p-private-key="2d87e1d1c9d8dda1cf9a662de1978d2cd0b96e6ba390c75ded87c6c4fab657057fa782ae5977c3bd02d58281dccd16f2c26990d1f6c22f818a84edac97957348" \
+	--p2p-peers=/ip4/$(IP_ADDRESS)/tcp/7778/p2p/12D3KooWLAqaDSStd48xxHSYpqNoDwNQakBWnyfwoYvtUBUBtBAi \
+	--p2p-private-key="f5a41dfde564a047d0ee07943bbefe86c477e2f8c592f22081c28b1756d1f19c7f7e690afa3cc123cde2059ea98fe2a218e475759affe833da73854a45b0853a" \
 	--metrics-port=9092
 
 node3:
 	./build/juno \
 	--network=sepolia \
-	--log-level=debug \
+	--log-level=info \
 	--db-path=./p2p-dbs/node3 \
 	--p2p \
-	--p2p-peers=/ip4/127.0.0.1/tcp/7777/p2p/12D3KooWLdURCjbp1D7hkXWk6ZVfcMDPtsNnPHuxoTcWXFtvrxGG \
-	--p2p-private-key="54a695e2a5d5717d5ba8730efcafe6f17251a1955733cffc55a4085fbf7f5d2c1b4009314092069ef7ca9b364ce3eb3072531c64dfb2799c6bad76720a5bdff0" \
+	--p2p-peers=/ip4/$(IP_ADDRESS)/tcp/7779/p2p/12D3KooWJQ3k8Gg5vGrUeASnN3Z1E6VGgmq72Gh84G2sNQkXsRcV \
+	--p2p-private-key="88fe55b20e47b0e92a02aa59f3f4a1c95cc2ed7b6cb62df04e2a308e3ae274570e9719104c938c881872ced4e34c137a175b279bdb41ece312fc31b5d6e98162" \
 	--metrics-port=9093
 
 pathfinder: juno-cached
