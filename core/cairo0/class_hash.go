@@ -1,4 +1,4 @@
-package core
+package cairo0
 
 //#include <stdint.h>
 //#include <stdlib.h>
@@ -14,10 +14,37 @@ import (
 	"errors"
 	"unsafe"
 
+	"github.com/NethermindEth/juno/core"
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/juno/starknet"
 	"github.com/NethermindEth/juno/utils"
 )
+
+var _ core.Class = (*Cairo0Class)(nil)
+
+// Cairo0Class unambiguously defines a [Contract]'s semantics.
+type Cairo0Class struct {
+	Abi json.RawMessage
+	// External functions defined in the class.
+	Externals []core.EntryPoint
+	// Functions that receive L1 messages. See
+	// https://www.cairo-lang.org/docs/hello_starknet/l1l2.html#receiving-a-message-from-l1
+	L1Handlers []core.EntryPoint
+	// Constructors for the class. Currently, only one is allowed.
+	Constructors []core.EntryPoint
+	// Base64 encoding of compressed Program
+	Program string
+}
+
+func (c *Cairo0Class) Version() uint64 {
+	return 0
+}
+
+func (c *Cairo0Class) Hash() (*felt.Felt, error) {
+	return cairo0ClassHash(c)
+}
+
+func (c *Cairo0Class) CompareClashHash(hash felt.Felt) error { return nil }
 
 func cairo0ClassHash(class *Cairo0Class) (*felt.Felt, error) {
 	definition, err := makeDeprecatedVMClass(class)
@@ -44,7 +71,7 @@ func cairo0ClassHash(class *Cairo0Class) (*felt.Felt, error) {
 }
 
 func makeDeprecatedVMClass(class *Cairo0Class) (*starknet.Cairo0Definition, error) {
-	adaptEntryPoint := func(ep EntryPoint) starknet.EntryPoint {
+	adaptEntryPoint := func(ep core.EntryPoint) starknet.EntryPoint {
 		return starknet.EntryPoint{
 			Selector: ep.Selector,
 			Offset:   ep.Offset,

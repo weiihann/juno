@@ -2,6 +2,7 @@ package core2sn
 
 import (
 	"github.com/NethermindEth/juno/core"
+	"github.com/NethermindEth/juno/core/cairo0"
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/juno/starknet"
 	"github.com/NethermindEth/juno/utils"
@@ -60,7 +61,7 @@ func AdaptSierraClass(class *core.Cairo1Class) *starknet.SierraDefinition {
 	}
 }
 
-func AdaptCairo0Class(class *core.Cairo0Class) (*starknet.Cairo0Definition, error) {
+func AdaptCairo0Class(class *cairo0.Cairo0Class) (*starknet.Cairo0Definition, error) {
 	decompressedProgram, err := utils.Gzip64Decode(class.Program)
 	if err != nil {
 		return nil, err

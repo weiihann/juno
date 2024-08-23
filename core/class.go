@@ -9,29 +9,13 @@ import (
 	"github.com/NethermindEth/juno/core/felt"
 )
 
-var (
-	_ Class = (*Cairo0Class)(nil)
-	_ Class = (*Cairo1Class)(nil)
-)
+var _ Class = (*Cairo1Class)(nil)
 
 // Class unambiguously defines a [Contract]'s semantics.
 type Class interface {
 	Version() uint64
 	Hash() (*felt.Felt, error)
-}
-
-// Cairo0Class unambiguously defines a [Contract]'s semantics.
-type Cairo0Class struct {
-	Abi json.RawMessage
-	// External functions defined in the class.
-	Externals []EntryPoint
-	// Functions that receive L1 messages. See
-	// https://www.cairo-lang.org/docs/hello_starknet/l1l2.html#receiving-a-message-from-l1
-	L1Handlers []EntryPoint
-	// Constructors for the class. Currently, only one is allowed.
-	Constructors []EntryPoint
-	// Base64 encoding of compressed Program
-	Program string
+	CompareClashHash(felt.Felt) error
 }
 
 // EntryPoint uniquely identifies a Cairo function to execute.
@@ -40,14 +24,6 @@ type EntryPoint struct {
 	Selector *felt.Felt
 	// The offset of the instruction in the class's bytecode.
 	Offset *felt.Felt
-}
-
-func (c *Cairo0Class) Version() uint64 {
-	return 0
-}
-
-func (c *Cairo0Class) Hash() (*felt.Felt, error) {
-	return cairo0ClassHash(c)
 }
 
 // Cairo1Class unambiguously defines a [Contract]'s semantics.
@@ -106,6 +82,19 @@ func (c *Cairo1Class) Hash() (*felt.Felt, error) {
 		c.AbiHash,
 		c.ProgramHash,
 	), nil
+}
+
+func (c *Cairo1Class) CompareClashHash(cHash felt.Felt) error {
+	hash, err := c.Hash()
+	if err != nil {
+		return err
+	}
+
+	if !hash.Equal(&cHash) {
+		return fmt.Errorf("cannot verify class hash: calculated hash %v, received hash %v", hash.String(), cHash.String())
+	}
+
+	return nil
 }
 
 var compiledClassV1Prefix = new(felt.Felt).SetBytes([]byte("COMPILED_CLASS_V1"))
@@ -189,18 +178,9 @@ func flattenCompiledEntryPoints(entryPoints []CompiledEntryPoint) []*felt.Felt {
 
 func VerifyClassHashes(classes map[felt.Felt]Class) error {
 	for hash, class := range classes {
-		if _, ok := class.(*Cairo0Class); ok {
-			// skip validation of cairo0 class hash
-			continue
-		}
-
-		cHash, err := class.Hash()
+		err := class.CompareClashHash(hash)
 		if err != nil {
 			return err
-		}
-
-		if !cHash.Equal(&hash) {
-			return fmt.Errorf("cannot verify class hash: calculated hash %v, received hash %v", cHash.String(), hash.String())
 		}
 	}
 

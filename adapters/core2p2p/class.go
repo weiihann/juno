@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/NethermindEth/juno/core"
+	"github.com/NethermindEth/juno/core/cairo0"
 	"github.com/NethermindEth/juno/p2p/starknet/spec"
 	"github.com/NethermindEth/juno/utils"
 )
@@ -19,7 +20,7 @@ func AdaptClass(class core.Class) *spec.Class {
 	}
 
 	switch v := class.(type) {
-	case *core.Cairo0Class:
+	case *cairo0.Cairo0Class:
 		return &spec.Class{
 			Class: &spec.Class_Cairo0{
 				Cairo0: &spec.Cairo0Class{

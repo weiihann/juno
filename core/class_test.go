@@ -9,6 +9,7 @@ import (
 
 	"github.com/NethermindEth/juno/clients/feeder"
 	"github.com/NethermindEth/juno/core"
+	"github.com/NethermindEth/juno/core/cairo0"
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/juno/encoder"
 	adaptfeeder "github.com/NethermindEth/juno/starknetdata/feeder"
@@ -124,7 +125,7 @@ func TestClassEncoding(t *testing.T) {
 	}{
 		{
 			name: "V0",
-			class: &core.Cairo0Class{
+			class: &cairo0.Cairo0Class{
 				Abi: json.RawMessage("abi"),
 				Externals: []core.EntryPoint{
 					{Selector: utils.HexToFelt(t, "0x44"), Offset: utils.HexToFelt(t, "0x37")},
@@ -177,7 +178,7 @@ func checkClassSymmetry(t *testing.T, input core.Class) {
 	require.NoError(t, encoder.Unmarshal(data, &class))
 
 	switch v := class.(type) {
-	case *core.Cairo0Class:
+	case *cairo0.Cairo0Class:
 		assert.Equal(t, input, v)
 	case *core.Cairo1Class:
 		assert.Equal(t, input, v)

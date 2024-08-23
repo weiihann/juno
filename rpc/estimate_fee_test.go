@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/NethermindEth/juno/core"
+	"github.com/NethermindEth/juno/core/cairo0"
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/juno/db"
 	"github.com/NethermindEth/juno/mocks"
@@ -143,7 +144,7 @@ func TestEstimateFee(t *testing.T) {
 	})
 }
 
-func assertEqualCairo0Class(t *testing.T, cairo0Class *core.Cairo0Class, class *rpc.Class) {
+func assertEqualCairo0Class(t *testing.T, cairo0Class *cairo0.Cairo0Class, class *rpc.Class) {
 	assert.Equal(t, cairo0Class.Program, class.Program)
 	assert.Equal(t, cairo0Class.Abi, class.Abi.(json.RawMessage))
 

@@ -7,6 +7,7 @@ import (
 
 	"github.com/NethermindEth/juno/clients/feeder"
 	"github.com/NethermindEth/juno/core"
+	"github.com/NethermindEth/juno/core/cairo0"
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/juno/db"
 	"github.com/NethermindEth/juno/mocks"
@@ -62,7 +63,7 @@ func TestClass(t *testing.T) {
 		class, rpcErr := handler.Class(latest, *hash)
 		require.Nil(t, rpcErr)
 
-		cairo0Class := coreClass.(*core.Cairo0Class)
+		cairo0Class := coreClass.(*cairo0.Cairo0Class)
 		assertEqualCairo0Class(t, cairo0Class, class)
 	})
 
@@ -141,7 +142,7 @@ func TestClassAt(t *testing.T) {
 		class, rpcErr := handler.ClassAt(latest, *cairo0ContractAddress)
 		require.Nil(t, rpcErr)
 
-		cairo0Class := coreClass.(*core.Cairo0Class)
+		cairo0Class := coreClass.(*cairo0.Cairo0Class)
 		assertEqualCairo0Class(t, cairo0Class, class)
 	})
 }

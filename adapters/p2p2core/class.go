@@ -6,6 +6,7 @@ import (
 
 	"github.com/NethermindEth/juno/adapters/sn2core"
 	"github.com/NethermindEth/juno/core"
+	"github.com/NethermindEth/juno/core/cairo0"
 	"github.com/NethermindEth/juno/core/crypto"
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/juno/p2p/starknet/spec"
@@ -25,13 +26,13 @@ func AdaptClass(class *spec.Class) core.Class {
 			return utils.Map(utils.NonNilSlice(points), adaptEntryPoint)
 		}
 
-		cairo0 := cls.Cairo0
-		return &core.Cairo0Class{
-			Abi:          json.RawMessage(cairo0.Abi),
-			Externals:    adaptEP(cairo0.Externals),
-			L1Handlers:   adaptEP(cairo0.L1Handlers),
-			Constructors: adaptEP(cairo0.Constructors),
-			Program:      cairo0.Program,
+		cairo0Class := cls.Cairo0
+		return &cairo0.Cairo0Class{
+			Abi:          json.RawMessage(cairo0Class.Abi),
+			Externals:    adaptEP(cairo0Class.Externals),
+			L1Handlers:   adaptEP(cairo0Class.L1Handlers),
+			Constructors: adaptEP(cairo0Class.Constructors),
+			Program:      cairo0Class.Program,
 		}
 	case *spec.Class_Cairo1:
 		cairo1 := cls.Cairo1

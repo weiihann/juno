@@ -7,6 +7,7 @@ import (
 
 	"github.com/NethermindEth/juno/adapters/core2sn"
 	"github.com/NethermindEth/juno/core"
+	"github.com/NethermindEth/juno/core/cairo0"
 )
 
 func marshalClassInfo(class core.Class) (json.RawMessage, error) {
@@ -17,7 +18,7 @@ func marshalClassInfo(class core.Class) (json.RawMessage, error) {
 	}
 
 	switch c := class.(type) {
-	case *core.Cairo0Class:
+	case *cairo0.Cairo0Class:
 		var err error
 		classInfo.Class, err = core2sn.AdaptCairo0Class(c)
 		if err != nil {

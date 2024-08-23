@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/NethermindEth/juno/core"
+	"github.com/NethermindEth/juno/core/cairo0"
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/juno/db"
 	"github.com/NethermindEth/juno/p2p/starknet/spec"
@@ -23,7 +24,7 @@ func AdaptStateDiff(reader core.StateReader, contractDiffs []*spec.ContractDiff,
 			panic(fmt.Errorf("unexpected error: %v when calculating class hash", err))
 		}
 		switch c := class.(type) {
-		case *core.Cairo0Class:
+		case *cairo0.Cairo0Class:
 			declaredV0Classes = append(declaredV0Classes, h)
 		case *core.Cairo1Class:
 			declaredV1Classes[*h] = c.Compiled.Hash()

@@ -9,6 +9,7 @@ import (
 
 	"github.com/NethermindEth/juno/clients/feeder"
 	"github.com/NethermindEth/juno/core"
+	"github.com/NethermindEth/juno/core/cairo0"
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/juno/db"
 	"github.com/NethermindEth/juno/db/pebble"
@@ -464,7 +465,7 @@ func TestRevert(t *testing.T) {
 
 	t.Run("revert declared classes", func(t *testing.T) {
 		classesM := make(map[felt.Felt]core.Class)
-		cairo0 := &core.Cairo0Class{
+		cairo0 := &cairo0.Cairo0Class{
 			Abi:          json.RawMessage("some cairo 0 class abi"),
 			Externals:    []core.EntryPoint{{new(felt.Felt).SetBytes([]byte("e1")), new(felt.Felt).SetBytes([]byte("e2"))}},
 			L1Handlers:   []core.EntryPoint{{new(felt.Felt).SetBytes([]byte("l1")), new(felt.Felt).SetBytes([]byte("l2"))}},
@@ -647,7 +648,7 @@ func TestRevertDeclaredClasses(t *testing.T) {
 		},
 	}
 	newClasses := map[felt.Felt]core.Class{
-		*classHash:  &core.Cairo0Class{},
+		*classHash:  &cairo0.Cairo0Class{},
 		*sierraHash: &core.Cairo1Class{},
 	}
 

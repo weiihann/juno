@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/NethermindEth/juno/core"
+	"github.com/NethermindEth/juno/core/cairo0"
 	"github.com/NethermindEth/juno/encoder"
 )
 
@@ -18,7 +19,7 @@ func RegisterCoreTypesToEncoder() {
 			reflect.TypeOf(core.InvokeTransaction{}),
 			reflect.TypeOf(core.L1HandlerTransaction{}),
 			reflect.TypeOf(core.DeployAccountTransaction{}),
-			reflect.TypeOf(core.Cairo0Class{}),
+			reflect.TypeOf(cairo0.Cairo0Class{}),
 			reflect.TypeOf(core.Cairo1Class{}),
 		}
 

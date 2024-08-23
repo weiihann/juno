@@ -6,6 +6,7 @@ import (
 
 	"github.com/NethermindEth/juno/adapters/sn2core"
 	"github.com/NethermindEth/juno/core"
+	"github.com/NethermindEth/juno/core/cairo0"
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/juno/jsonrpc"
 	"github.com/NethermindEth/juno/starknet"
@@ -90,7 +91,7 @@ func (h *Handler) Class(id BlockID, classHash felt.Felt) (*Class, *jsonrpc.Error
 
 	var rpcClass *Class
 	switch c := declared.Class.(type) {
-	case *core.Cairo0Class:
+	case *cairo0.Cairo0Class:
 		adaptEntryPoint := func(ep core.EntryPoint) EntryPoint {
 			return EntryPoint{
 				Offset:   ep.Offset,

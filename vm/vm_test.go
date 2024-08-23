@@ -8,6 +8,7 @@ import (
 
 	"github.com/NethermindEth/juno/clients/feeder"
 	"github.com/NethermindEth/juno/core"
+	"github.com/NethermindEth/juno/core/cairo0"
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/juno/db/pebble"
 	"github.com/NethermindEth/juno/encoder"
@@ -33,7 +34,7 @@ func TestV0Call(t *testing.T) {
 	simpleClass, err := gw.Class(context.Background(), classHash)
 	require.NoError(t, err)
 
-	require.NoError(t, encoder.RegisterType(reflect.TypeOf(core.Cairo0Class{})))
+	require.NoError(t, encoder.RegisterType(reflect.TypeOf(cairo0.Cairo0Class{})))
 
 	testState := core.NewState(txn)
 	require.NoError(t, testState.Update(0, &core.StateUpdate{
@@ -165,7 +166,7 @@ func TestCall_MaxSteps(t *testing.T) {
 	simpleClass, err := gw.Class(context.Background(), classHash)
 	require.NoError(t, err)
 
-	encoder.RegisterType(reflect.TypeOf(core.Cairo0Class{})) //nolint:errcheck
+	encoder.RegisterType(reflect.TypeOf(cairo0.Cairo0Class{})) //nolint:errcheck
 
 	testState := core.NewState(txn)
 	require.NoError(t, testState.Update(0, &core.StateUpdate{

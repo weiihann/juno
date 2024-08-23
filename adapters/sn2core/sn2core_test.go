@@ -8,6 +8,7 @@ import (
 	"github.com/NethermindEth/juno/adapters/sn2core"
 	"github.com/NethermindEth/juno/clients/feeder"
 	"github.com/NethermindEth/juno/core"
+	"github.com/NethermindEth/juno/core/cairo0"
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/juno/starknet"
 	"github.com/NethermindEth/juno/utils"
@@ -236,7 +237,7 @@ func TestClassV0(t *testing.T) {
 			require.NoError(t, err)
 			classGeneric, err := sn2core.AdaptCairo0Class(response.V0)
 			require.NoError(t, err)
-			class, ok := classGeneric.(*core.Cairo0Class)
+			class, ok := classGeneric.(*cairo0.Cairo0Class)
 			require.True(t, ok)
 
 			for i, v := range response.V0.EntryPoints.External {

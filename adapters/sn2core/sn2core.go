@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/NethermindEth/juno/core"
+	"github.com/NethermindEth/juno/core/cairo0"
 	"github.com/NethermindEth/juno/core/crypto"
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/juno/starknet"
@@ -319,7 +320,7 @@ func AdaptSegmentLengths(l starknet.SegmentLengths) core.SegmentLengths {
 }
 
 func AdaptCairo0Class(response *starknet.Cairo0Definition) (core.Class, error) {
-	class := new(core.Cairo0Class)
+	class := new(cairo0.Cairo0Class)
 	class.Abi = response.Abi
 
 	adapt := func(ep starknet.EntryPoint) core.EntryPoint {
