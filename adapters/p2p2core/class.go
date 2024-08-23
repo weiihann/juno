@@ -11,6 +11,7 @@ import (
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/juno/p2p/starknet/spec"
 	"github.com/NethermindEth/juno/starknet"
+	"github.com/NethermindEth/juno/starknet/compiler"
 	"github.com/NethermindEth/juno/utils"
 )
 
@@ -111,7 +112,7 @@ func createCompiledClass(cairo1 *spec.Cairo1Class) (*core.CompiledClass, error) 
 		Version: cairo1.ContractClassVersion,
 	}
 
-	compiledClass, err := starknet.Compile(def)
+	compiledClass, err := compiler.Compile(def)
 	if err != nil {
 		return nil, err
 	}

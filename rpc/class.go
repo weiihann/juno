@@ -10,6 +10,7 @@ import (
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/juno/jsonrpc"
 	"github.com/NethermindEth/juno/starknet"
+	"github.com/NethermindEth/juno/starknet/compiler"
 	"github.com/NethermindEth/juno/utils"
 )
 
@@ -50,7 +51,7 @@ func adaptDeclaredClass(declaredClass json.RawMessage) (core.Class, error) {
 
 	switch {
 	case feederClass.V1 != nil:
-		compiledClass, cErr := starknet.Compile(feederClass.V1)
+		compiledClass, cErr := compiler.Compile(feederClass.V1)
 		if cErr != nil {
 			return nil, cErr
 		}
