@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/binary"
+	"fmt"
 	"math"
 	"strings"
 	stdsync "sync"
@@ -14,6 +15,7 @@ import (
 	"github.com/NethermindEth/juno/feed"
 	"github.com/NethermindEth/juno/jsonrpc"
 	"github.com/NethermindEth/juno/l1/contract"
+	"github.com/NethermindEth/juno/mempool"
 	"github.com/NethermindEth/juno/rpc/rpccore"
 	"github.com/NethermindEth/juno/sync"
 	"github.com/NethermindEth/juno/utils"
@@ -30,6 +32,7 @@ type Handler struct {
 	feederClient  *feeder.Client
 	vm            vm.VM
 	log           utils.Logger
+	memPool       *mempool.Pool
 
 	version      string
 	newHeads     *feed.Feed[*core.Block]
@@ -37,8 +40,8 @@ type Handler struct {
 	pendingBlock *feed.Feed[*core.Block]
 	l1Heads      *feed.Feed[*core.L1Head]
 
-	idgen         func() uint64
-	subscriptions stdsync.Map // map[uint64]*subscription
+	idgen         func() string
+	subscriptions stdsync.Map // map[string]*subscription
 
 	blockTraceCache *lru.Cache[rpccore.TraceCacheKey, []TracedBlockTransaction]
 
@@ -67,11 +70,11 @@ func New(bcReader blockchain.Reader, syncReader sync.Reader, virtualMachine vm.V
 		syncReader: syncReader,
 		log:        logger,
 		vm:         virtualMachine,
-		idgen: func() uint64 {
+		idgen: func() string {
 			var n uint64
 			for err := binary.Read(rand.Reader, binary.LittleEndian, &n); err != nil; {
 			}
-			return n
+			return fmt.Sprintf("%d", n)
 		},
 		version:      version,
 		newHeads:     feed.New[*core.Block](),
@@ -83,6 +86,11 @@ func New(bcReader blockchain.Reader, syncReader sync.Reader, virtualMachine vm.V
 		filterLimit:     math.MaxUint,
 		coreContractABI: contractABI,
 	}
+}
+
+func (h *Handler) WithMempool(memPool *mempool.Pool) *Handler {
+	h.memPool = memPool
+	return h
 }
 
 // WithFilterLimit sets the maximum number of blocks to scan in a single call for event filtering.
@@ -101,7 +109,7 @@ func (h *Handler) WithCallMaxSteps(maxSteps uint64) *Handler {
 	return h
 }
 
-func (h *Handler) WithIDGen(idgen func() uint64) *Handler {
+func (h *Handler) WithIDGen(idgen func() string) *Handler {
 	h.idgen = idgen
 	return h
 }
@@ -145,7 +153,7 @@ func (h *Handler) Version() (string, *jsonrpc.Error) {
 }
 
 func (h *Handler) SpecVersion() (string, *jsonrpc.Error) {
-	return "0.8.0", nil
+	return "0.8.1", nil
 }
 
 // Currently only used for testing

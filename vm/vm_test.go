@@ -38,7 +38,7 @@ func TestCallDeprecatedCairo(t *testing.T) {
 		},
 	}, map[felt.Felt]core.Class{
 		*classHash: simpleClass,
-	}))
+	}, false))
 
 	entryPoint := utils.HexToFelt(t, "0x39e11d48192e4333233c7eb19d10ad67c362bb28580c604d67884c85da39695")
 
@@ -60,7 +60,7 @@ func TestCallDeprecatedCairo(t *testing.T) {
 				},
 			},
 		},
-	}, nil))
+	}, nil, false))
 
 	ret, err = New(false, nil).Call(&CallInfo{
 		ContractAddress: contractAddr,
@@ -94,7 +94,7 @@ func TestCallDeprecatedCairoMaxSteps(t *testing.T) {
 		},
 	}, map[felt.Felt]core.Class{
 		*classHash: simpleClass,
-	}))
+	}, false))
 
 	entryPoint := utils.HexToFelt(t, "0x39e11d48192e4333233c7eb19d10ad67c362bb28580c604d67884c85da39695")
 
@@ -129,7 +129,7 @@ func TestCallCairo(t *testing.T) {
 		},
 	}, map[felt.Felt]core.Class{
 		*classHash: simpleClass,
-	}))
+	}, false))
 
 	logLevel := utils.NewLogLevel(utils.ERROR)
 	log, err := utils.NewZapLogger(logLevel, false)
@@ -158,7 +158,7 @@ func TestCallCairo(t *testing.T) {
 				},
 			},
 		},
-	}, nil))
+	}, nil, false))
 
 	ret, err = New(false, log).Call(&CallInfo{
 		ContractAddress: contractAddr,
@@ -193,7 +193,7 @@ func TestCallInfoErrorHandling(t *testing.T) {
 		},
 	}, map[felt.Felt]core.Class{
 		*classHash: simpleClass,
-	}))
+	}, false))
 
 	logLevel := utils.NewLogLevel(utils.ERROR)
 	log, err := utils.NewZapLogger(logLevel, false)
@@ -240,7 +240,7 @@ func TestExecute(t *testing.T) {
 				L1GasPriceSTRK:   &felt.Zero,
 			},
 		}, state,
-			&network, false, false, false, false)
+			&network, false, false, false, false, false)
 		require.NoError(t, err)
 	})
 	t.Run("zero data", func(t *testing.T) {
@@ -250,7 +250,7 @@ func TestExecute(t *testing.T) {
 				L1GasPriceETH:    &felt.Zero,
 				L1GasPriceSTRK:   &felt.Zero,
 			},
-		}, state, &network, false, false, false, false)
+		}, state, &network, false, false, false, false, false)
 		require.NoError(t, err)
 	})
 }

@@ -355,6 +355,59 @@ func TestTransactionByHash(t *testing.T) {
 				"fee_data_availability_mode": "L1"
 			}`,
 		},
+		// https://alpha-sepolia.starknet.io/feeder_gateway/get_transaction?transactionHash=0x2db07ed11b1f6c678de9fc19ef0dfb8e71631e1cff236a34e68f51528a21282
+		"INVOKE v3 without l1_data_gas": {
+			hash:    "0x2db07ed11b1f6c678de9fc19ef0dfb8e71631e1cff236a34e68f51528a21282",
+			network: &utils.Integration,
+			expected: `{
+				"transaction_hash": "0x2db07ed11b1f6c678de9fc19ef0dfb8e71631e1cff236a34e68f51528a21282",
+				"version": "0x3",
+				"signature": [
+					"0x6b67b53231b0ad782b651cb529004258ac79f8bd069042127e0f58edd40fd89",
+					"0x36cc9eaeb31b0b3d990624cf105aa0cea86590452e188dadb75edc02ddeea51"
+				],
+				"nonce": "0x12c0c",
+				"resource_bounds": {
+					"l1_gas": {
+						"max_amount": "0x60",
+						"max_price_per_unit": "0x13ac02cbe617"
+					},
+					"l2_gas": { "max_amount": "0x0", "max_price_per_unit": "0x0" }
+				},
+				"tip": "0x0",
+				"paymaster_data": [],
+				"sender_address": "0x573ea9a8602e03417a4a31d55d115748f37a08bbb23adf6347cb699743a998d",
+				"calldata": [
+					"0x1",
+					"0x53d5cb0de4f03f9ac31f83621cef64b9372bf1f690fdfa2ba8a07c316e67817",
+					"0xc844fd57777b0cd7e75c8ea68deec0adf964a6308da7a58de32364b7131cc8",
+					"0x13",
+					"0x4c7fb0cc02a3432253dcc76f8ab04ed11bc804ca36312d9fbd0777541f266",
+					"0x192603",
+					"0xd34ba8c515a574cd724301a5b50e997abcfd377f705e70a8330c706f3ccf34",
+					"0x663c8f59",
+					"0x204030100000000000000000000000000000000000000000000000000000000",
+					"0x4",
+					"0x5444abc7",
+					"0x54497b21",
+					"0x54497b21",
+					"0x54497b21",
+					"0xb6d5fbd139a7d956f",
+					"0x1",
+					"0x2",
+					"0x723516b6471960da09efa937c31abd5c46590e7b9df4773a5a6111497541508",
+					"0x385effc19083082f432ed7ab855de96b575e14a21b0a6d7a4395ff4d99e30f6",
+					"0x2cb74dff29a13dd5d855159349ec92f943bacf0547ff3734e7d84a15d08cbc5",
+					"0xb5eb2dec854e82a991956a933cd3b20b888bcb1737427e829efc5cd7e241e7",
+					"0xb71581436348419b44d939dc2af69a310c7a4b7d4f16b07f71d1957e9d5ceb",
+					"0x4225d1c8ee8e451a25e30c10689ef898e11ccf5c0f68d0fc7876c47b318e946"
+				],
+				"account_deployment_data": [],
+				"type": "INVOKE",
+				"nonce_data_availability_mode": "L1",
+				"fee_data_availability_mode": "L1"
+			}`,
+		},
 	}
 
 	for name, test := range tests {
@@ -1590,6 +1643,170 @@ func TestResourceBoundsValidation(t *testing.T) {
 			} else {
 				assert.NoError(t, err, "Expected validation to pass, but it failed")
 			}
+		})
+	}
+}
+
+func TestAdaptBroadcastedTransaction(t *testing.T) {
+	txnNonZeroL2GasData := `{
+			"type": "DEPLOY_ACCOUNT",
+			"version": "0x3",
+			"signature": [
+				"0x63c0e0fe22d6e82187b84e06f33644f7dc6edce494a317bfcdd0bb57ab862fa",
+				"0x6219aa7d091eac96f07d7d195f12eff9a8786af85ddf41028428ee8f510e75e"
+			],
+			"nonce": "0x1",
+			"contract_address_salt": "0x520b540d51c06e1539cbc42e93a37cbef534082c75a3991179cfac83da67fdb",
+			"constructor_calldata": [
+				"0x33444ad846cdd5f23eb73ff09fe6fddd568284a0fb7d1be20ee482f044dabe2",
+				"0x79dc0da7c54b95f10aa182ad0a46400db63156920adb65eca2654c0945a463",
+				"0x2",
+				"0x510b540d51c06e1539cbc42e93a37cbef534082c75a3991179cfac83da67fdb",
+				"0x0"
+			],
+			"class_hash": "0x26ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918",
+			"resource_bounds": {
+				"l1_gas": {
+					"max_amount": "0x6fde2b4eb000",
+					"max_price_per_unit": "0x6fde2b4eb000"
+				},
+				"l2_gas": {													
+					"max_amount": "0x6fde2b4eb000",
+					"max_price_per_unit": "0x6fde2b4eb000"
+				},
+				"l1_data_gas": {													
+					"max_amount": "0x6fde2b4eb000",
+					"max_price_per_unit": "0x6fde2b4eb000"
+				}
+			},
+			"tip": "0x1",
+			"paymaster_data": [],
+			"nonce_data_availability_mode": "L1",
+			"fee_data_availability_mode": "L2"
+		}`
+	expectedTxn := core.DeployAccountTransaction{
+		DeployTransaction: core.DeployTransaction{
+			TransactionHash:     utils.HexToFelt(t, "0x279b4c80718c256682226b098aecd3f5b0d0ddcfeb697d0047f4aa31a6e449f"),
+			ContractAddressSalt: utils.HexToFelt(t, "0x520b540d51c06e1539cbc42e93a37cbef534082c75a3991179cfac83da67fdb"),
+			ClassHash:           utils.HexToFelt(t, "0x26ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918"),
+			ContractAddress:     utils.HexToFelt(t, "0x55e3ecdbd8f0b537b3cf6c31a77dff63ddfd5bf5dcc5ba7eb4d09e91fbe0f91"),
+			ConstructorCallData: []*felt.Felt{
+				utils.HexToFelt(t, "0x33444ad846cdd5f23eb73ff09fe6fddd568284a0fb7d1be20ee482f044dabe2"),
+				utils.HexToFelt(t, "0x79dc0da7c54b95f10aa182ad0a46400db63156920adb65eca2654c0945a463"),
+				utils.HexToFelt(t, "0x2"),
+				utils.HexToFelt(t, "0x510b540d51c06e1539cbc42e93a37cbef534082c75a3991179cfac83da67fdb"),
+				utils.HexToFelt(t, "0x0"),
+			},
+			Version: new(core.TransactionVersion).SetUint64(3),
+		},
+		TransactionSignature: []*felt.Felt{
+			utils.HexToFelt(t, "0x63c0e0fe22d6e82187b84e06f33644f7dc6edce494a317bfcdd0bb57ab862fa"),
+			utils.HexToFelt(t, "0x6219aa7d091eac96f07d7d195f12eff9a8786af85ddf41028428ee8f510e75e"),
+		},
+		Nonce: utils.HexToFelt(t, "0x1"),
+		ResourceBounds: map[core.Resource]core.ResourceBounds{
+			core.ResourceL1Gas: {
+				MaxAmount:       utils.HexToFelt(t, "0x6fde2b4eb000").Uint64(),
+				MaxPricePerUnit: utils.HexToFelt(t, "0x6fde2b4eb000"),
+			},
+			core.ResourceL2Gas: {
+				MaxAmount:       utils.HexToFelt(t, "0x6fde2b4eb000").Uint64(),
+				MaxPricePerUnit: utils.HexToFelt(t, "0x6fde2b4eb000"),
+			},
+			core.ResourceL1DataGas: {
+				MaxAmount:       utils.HexToFelt(t, "0x6fde2b4eb000").Uint64(),
+				MaxPricePerUnit: utils.HexToFelt(t, "0x6fde2b4eb000"),
+			},
+		},
+		Tip:           1, // 0x1
+		PaymasterData: []*felt.Felt{},
+		NonceDAMode:   core.DAModeL1,
+		FeeDAMode:     core.DAModeL2,
+	}
+
+	txnNonZeroL2Gas := rpc.BroadcastedTransaction{}
+	require.NoError(t, json.Unmarshal([]byte(txnNonZeroL2GasData), &txnNonZeroL2Gas))
+
+	tx, _, _, err := rpc.AdaptBroadcastedTransaction(&txnNonZeroL2Gas, &utils.Sepolia)
+	require.NoError(t, err)
+	resultTxn, ok := (tx).(*core.DeployAccountTransaction)
+
+	require.True(t, ok)
+	require.Equal(t, expectedTxn, *resultTxn)
+}
+
+func TestResourceBoundsMapMarshalJSON(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    *rpc.ResourceBoundsMap
+		expected string
+	}{
+		{
+			name: "with l1_data_gas",
+			input: &rpc.ResourceBoundsMap{
+				L1Gas: &rpc.ResourceBounds{
+					MaxAmount:       new(felt.Felt).SetUint64(100),
+					MaxPricePerUnit: new(felt.Felt).SetUint64(10),
+				},
+				L2Gas: &rpc.ResourceBounds{
+					MaxAmount:       new(felt.Felt).SetUint64(200),
+					MaxPricePerUnit: new(felt.Felt).SetUint64(20),
+				},
+				L1DataGas: &rpc.ResourceBounds{
+					MaxAmount:       new(felt.Felt).SetUint64(300),
+					MaxPricePerUnit: new(felt.Felt).SetUint64(30),
+				},
+			},
+			expected: `{
+				"l1_gas": {
+					"max_amount": "0x64",
+					"max_price_per_unit": "0xa"
+				},
+				"l2_gas": {
+					"max_amount": "0xc8",
+					"max_price_per_unit": "0x14"
+				},
+				"l1_data_gas": {
+					"max_amount": "0x12c",
+					"max_price_per_unit": "0x1e"
+				}
+			}`,
+		},
+		{
+			name: "without l1_data_gas",
+			input: &rpc.ResourceBoundsMap{
+				L1Gas: &rpc.ResourceBounds{
+					MaxAmount:       new(felt.Felt).SetUint64(100),
+					MaxPricePerUnit: new(felt.Felt).SetUint64(10),
+				},
+				L2Gas: &rpc.ResourceBounds{
+					MaxAmount:       new(felt.Felt).SetUint64(200),
+					MaxPricePerUnit: new(felt.Felt).SetUint64(20),
+				},
+				L1DataGas: nil,
+			},
+			expected: `{
+				"l1_gas": {
+					"max_amount": "0x64",
+					"max_price_per_unit": "0xa"
+				},
+				"l2_gas": {
+					"max_amount": "0xc8",
+					"max_price_per_unit": "0x14"
+				}
+			}`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.input.MarshalJSON()
+			require.NoError(t, err)
+
+			var gotMap, expectedMap map[string]interface{}
+			require.NoError(t, json.Unmarshal(got, &gotMap))
+			require.NoError(t, json.Unmarshal([]byte(test.expected), &expectedMap))
+			assert.Equal(t, expectedMap, gotMap)
 		})
 	}
 }

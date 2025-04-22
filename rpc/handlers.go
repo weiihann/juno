@@ -6,6 +6,7 @@ import (
 	"github.com/NethermindEth/juno/blockchain"
 	"github.com/NethermindEth/juno/clients/feeder"
 	"github.com/NethermindEth/juno/jsonrpc"
+	"github.com/NethermindEth/juno/mempool"
 	rpccore "github.com/NethermindEth/juno/rpc/rpccore"
 	rpcv6 "github.com/NethermindEth/juno/rpc/v6"
 	rpcv7 "github.com/NethermindEth/juno/rpc/v7"
@@ -56,13 +57,6 @@ func (h *Handler) WithCallMaxSteps(maxSteps uint64) *Handler {
 	return h
 }
 
-func (h *Handler) WithIDGen(idgen func() uint64) *Handler {
-	h.rpcv6Handler.WithIDGen(idgen)
-	h.rpcv7Handler.WithIDGen(idgen)
-	h.rpcv8Handler.WithIDGen(idgen)
-	return h
-}
-
 func (h *Handler) WithFeeder(feederClient *feeder.Client) *Handler {
 	h.rpcv6Handler.WithFeeder(feederClient)
 	h.rpcv7Handler.WithFeeder(feederClient)
@@ -74,6 +68,12 @@ func (h *Handler) WithGateway(gatewayClient rpccore.Gateway) *Handler {
 	h.rpcv6Handler.WithGateway(gatewayClient)
 	h.rpcv7Handler.WithGateway(gatewayClient)
 	h.rpcv8Handler.WithGateway(gatewayClient)
+	return h
+}
+
+func (h *Handler) WithMempool(memPool *mempool.Pool) *Handler {
+	h.rpcv6Handler.WithMempool(memPool)
+	h.rpcv8Handler.WithMempool(memPool)
 	return h
 }
 

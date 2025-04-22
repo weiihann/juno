@@ -47,7 +47,7 @@
 
 - Golang 1.24 or higher is required to build and run the project. You can find the installer on
   the official Golang [download](https://go.dev/doc/install) page.
-- [Rust](https://www.rust-lang.org/tools/install) 1.85.0 or higher.
+- [Rust](https://www.rust-lang.org/tools/install) 1.85.1 or higher.
 - A C compiler: `gcc`.
 - Install some dependencies on your system:
   
@@ -103,6 +103,10 @@ To view logs from the Docker container, use the following command:
 ```shell
 docker logs -f juno
 ```
+
+## 📚 Documentation
+
+You can find the full documentation [here](https://juno.nethermind.io/).
 
 ## 📸 Snapshots
 
@@ -359,6 +363,9 @@ The decentralization of Starknet is complete! Juno becomes a sequencer and parti
 
 We welcome PRs from external contributors and would love to help you get up to speed.
 Let us know you're interested in the [Discord server](https://discord.gg/TcHbSZ9ATd) and we can discuss good first issues.
+
+For more details on how to get started, check out our [contributing guidelines](https://github.com/NethermindEth/juno/blob/main/CONTRIBUTING.md).
+
 There are also many other ways to contribute. Here are some ideas:
 
 * Run a node.
